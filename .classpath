@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="tools/beaver-rt.jar" sourcepath="tools/beaver-0.9.11.zip"/>
+	<classpathentry kind="lib" path="tools/jastadd2.jar" sourcepath="tools/jastadd2-src.zip"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="tools/beaver-ant.jar" sourcepath="tools/beaver-0.9.11.zip"/>
+	<classpathentry kind="lib" path="tools/beaver-cc.jar" sourcepath="tools/beaver-0.9.11.zip"/>
+	<classpathentry kind="lib" path="tools/jflex-1.6.1.jar" sourcepath="tools/jflex-1.6.1.zip"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

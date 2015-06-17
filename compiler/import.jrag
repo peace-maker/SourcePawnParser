@@ -1,0 +1,9 @@
+import spbeaver.UnaryOperator.UnaryOp;
+import spbeaver.BinaryOperator.BinaryOp;
+import java.util.HashMap;
+
+aspect ToString {
+  syn lazy String Label.toString() {
+  	return getID() + ":";
+  }
+}

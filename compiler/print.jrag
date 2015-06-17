@@ -1,0 +1,348 @@
+aspect PrettyPrint {
+  public class PrettyPrinter {
+    public static String INDENT = "  ";
+  	private StringBuilder sb;
+  	public PrettyPrinter(){
+  		sb = new StringBuilder();
+  	}
+  
+    public void append(String s) {
+       sb.append(s);
+    }
+    
+    public String getString() {
+       return sb.toString();
+    }
+  }
+
+  //similar to JastAdd Java compiler	
+  syn String ASTNode.indent() {
+  	String indent = extractIndent();
+  	return indent.startsWith("\n") ? indent : ("\n" + indent);
+  }
+
+  syn String ASTNode.extractIndent() {
+  	  if(getParent() == null)
+   		   return "";
+      String indent = getParent().extractIndent();
+      if(getParent().addsIndentationLevel())
+      	indent += PrettyPrinter.INDENT;
+      return indent;
+  }
+
+  syn boolean ASTNode.addsIndentationLevel() = false;
+  eq Block.addsIndentationLevel() = true;
+  eq Switch.addsIndentationLevel() = true;
+  eq SwitchCase.addsIndentationLevel() = true;
+
+  syn lazy PrettyPrinter SourcePawnFile.printer() {
+  	return new PrettyPrinter();
+  }
+  eq SourcePawnFile.getStatements().printer() = this.printer();
+  
+  inh lazy PrettyPrinter Statement.printer();
+  inh lazy PrettyPrinter Declaration.printer();
+  inh lazy PrettyPrinter Expression.printer();
+  
+  syn PrettyPrinter SourcePawnFile.print() {
+    for (Statement s : getStatementss()) {
+	  //printer().append(indent() + PrettyPrinter.INDENT);
+      s.print();
+    }
+    return printer();
+  }
+  
+  abstract void Statement.print();
+  public void EmptyStatement.print() {
+  }
+  
+  public void Break.print() {
+  	printer().append(indent());
+  	printer().append("break;");
+  }
+  
+  public void Continue.print() {
+  	printer().append(indent());
+  	printer().append("continue;");
+  }
+  
+  public void ExpressionStatement.print() {
+  	printer().append(indent());
+  	getExpr().print();
+  	printer().append(";");
+  }
+
+  public void VarDecl.print() {
+  	printer().append(indent());
+	getVar().print();
+	if(getInit() != null) {
+	  	printer().append(" = ");
+	  	getInit().print();
+	}
+	printer().append(";");
+  }
+  
+  public void Declaration.print() {
+  	if(getIsConst())
+  		printer().append("const ");
+  	else
+  		printer().append("new ");
+  	
+  	if(hasLabel())
+  		getLabel().print();
+  	
+  	getName().print();
+  	
+  	for(Expression o: getDimss()) {
+  		printer().append("[");
+  		if(o != null)
+  			o.print();
+  		printer().append("]");
+  	}
+  }
+  
+  public void While.print() {
+  	printer().append(indent());
+  	printer().append("while (");
+  	getCondition().print();
+  	printer().append(")");
+  	getBody().print();
+  	printer().append("\n");
+  }
+  
+  public void DoWhile.print() {
+  	printer().append(indent());
+  	printer().append("do");
+  	getBody().print();
+  	printer().append("while (");
+  	getCondition().print();
+  	printer().append(");\n");
+  }
+  
+  public void Switch.print() {
+  	printer().append(indent());
+  	printer().append("switch (");
+  	getExpr().print();
+  	printer().append(")");
+  	printer().append(indent());
+  	printer().append("{");
+  	for(SwitchCase c: getCasess()) {
+  		c.print();
+  	}
+  	if (hasDefault()) {
+  		printer().append(indent() + PrettyPrinter.INDENT);
+  		printer().append("default:");
+  		getDefault().print();
+  	}
+  	printer().append(indent());
+  	printer().append("}");
+  }
+  
+  public void SwitchCase.print() {
+  	printer().append(indent());
+  	printer().append("case ");
+  	boolean addComma = false;
+  	for(Expression e: getExprs()) {
+  		if (addComma)
+  			printer().append(", ");
+  		e.print();
+  		addComma = true;
+  	}
+  	printer().append(":");
+  	getBody().print();
+  }
+  
+  public void ForLoop.print() {
+  	printer().append(indent());
+  	printer().append("for (");
+  	if(hasInit())
+  		getInit().print();
+  	printer().append("; ");
+  	if(hasCondition())
+  		getCondition().print();
+  	printer().append("; ");
+  	boolean addComma = false;
+  	for(Expression e: getSteps()) {
+  		if (addComma)
+  			printer().append(", ");
+  		e.print();
+  		addComma = true;
+  	}
+  	printer().append(")");
+  	getBody().print();
+  }
+  
+  // Special formatting case for switch cases and single statements
+  // Don't indent, if it's a block as case body.
+  public String Statement.extractIndent() {
+  	  if(getParent() == null)
+   		   return "";
+      String indent = getParent().extractIndent();
+      
+      if(getParent() instanceof SwitchCase && this instanceof Block)
+      	return indent;
+      
+      if(getParent().addsIndentationLevel())
+      	indent += PrettyPrinter.INDENT;
+      return indent;
+  }
+  
+  public void Block.print() {
+  	printer().append(indent() + "{");
+  	for (Statement s : getStatementss()) {
+      s.print();
+    }
+  	printer().append(indent() + "}");
+  }
+  
+  abstract void Expression.print();
+  public void EmptyExpression.print() {
+  }
+  
+  public void Assignment.print() {
+  	getLHS().print();
+  	printer().append(" " + BinaryOperator.binaryOpToString(getOperator()) + "= ");
+  	getRHS().print();
+  }
+  
+  public void TernaryExpression.print() {
+  	getCondition().print();
+  	printer().append(" ? ");
+  	getLeft().print();
+  	printer().append(" : ");
+  	getRight().print();
+  }
+  
+  public void BinaryExpression.print() {
+  	getLHS().print();
+  	printer().append(" " + BinaryOperator.binaryOpToString(getOperator()) + " ");
+  	getRHS().print();
+  }
+  
+  public void IncDec.print() {
+  	if (getPostfix()) {
+  		getExpr().print();
+  		printer().append(UnaryOperator.unaryOpToString(getOperator()));
+  	}
+  	else {
+  		printer().append(UnaryOperator.unaryOpToString(getOperator()));
+  		getExpr().print();
+  	}
+  }
+  
+  public void UnaryExpr.print() {
+  	printer().append(UnaryOperator.unaryOpToString(getOperator()));
+  	getExpr().print();
+  }
+  
+  public void SizeOf.print() {
+  	printer().append("sizeof(");
+  	getName().print();
+  	for(int i=0;i<getLevel();i++) {
+  		printer().append("[]");
+  	}
+  }
+  
+  public void UnsafeCast.print() {
+  	printer().append(getLabel());
+  	getExpr().print();
+  }
+  
+  public void Call.print() {
+  	getMethodName().print();
+  	printer().append("(");
+  	boolean addComma = false;
+  	for(Expression e: getArgumentss()) {
+  		if(addComma)
+  			printer().append(", ");
+  		e.print();
+  		addComma = true;
+  	}
+  	printer().append(")");
+  }
+  
+  public void Index.print() {
+  	getBase().print();
+  	printer().append("[");
+  	getIndex().print();
+  	printer().append("]");
+  }
+  
+  public void Identifier.print() {
+  	printer().append(getID());
+  }
+  
+  public void Label.print() {
+  	printer().append(getID() + ":");
+  }
+  
+  public void Parenthesis.print() {
+  	printer().append("(");
+  	getExpr().print();
+  	printer().append(")");
+  }
+  
+  public void True.print() {
+  	printer().append("true");
+  }
+  public void False.print() {
+  	printer().append("false");
+  }
+  public void SPFloat.print() {
+  	printer().append(getFloat());
+  }
+  public void SPInteger.print() {
+  	printer().append(getInteger());
+  }
+  public void SPString.print() {
+  	printer().append(getString());
+  }
+  public void SPCharacter.print() {
+  	printer().append(getChar());
+  }
+  
+  public void ArrayLiteral.print() {
+  	printer().append("{");
+  	boolean addComma = false;
+  	for(Expression e: getExpressionss()) {
+  		if(addComma)
+  			printer().append(", ");
+  		e.print();
+  		addComma = true;
+  	}
+  	
+  	if(addComma)
+  		printer().append(", ");
+  	if(getRepeatLastElement())
+  		printer().append("...");
+  	printer().append("}");
+  }
+  
+  public void StructInitializer.print() {
+  	printer().append("{\n");
+  	
+  	// Find longest identifier
+  	int maxlength = 0;
+  	for(StructElement e: getElementss()) {
+  		if(e.getIdentifier().getID().length() > maxlength)
+  			maxlength = e.getIdentifier().getID().length();
+  	}
+  	
+  	boolean addComma = false;
+  	for(StructElement e: getElementss()) {
+  		if(addComma)
+  			printer().append(",\n");
+  		printer().append(PrettyPrinter.INDENT);
+  		
+  		e.getIdentifier().print();
+  		// Align all the values
+  		for(int i=0;i<maxlength-e.getIdentifier().getID().length();i++)
+  			printer().append(" ");
+  		
+  		printer().append(" = ");
+  		e.getValue().print();
+  		addComma = true;
+  	}
+  	printer().append("\n}");
+  }
+}

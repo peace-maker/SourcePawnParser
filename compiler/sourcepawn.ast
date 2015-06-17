@@ -1,0 +1,60 @@
+SourcePawnFile ::= Statements:Statement*;
+
+
+abstract Statement;
+EmptyStatement:Statement;
+
+Break:Statement;
+Continue:Statement;
+ExpressionStatement:Statement ::= Expr:Expression;
+
+Declaration ::= Name:Identifier [Label:Label] <IsConst:boolean> Dims:Expression*;
+VarDecl:Statement ::= Var:Declaration [Init:Expression];
+
+While:Statement ::= Condition:Expression Body:Statement;
+DoWhile:While;
+Switch:Statement ::= Expr:Expression Cases:SwitchCase* [Default:Statement];
+SwitchCase:Statement ::= Expr:Expression* Body:Statement;
+
+ForLoop:Statement ::= [Init:Statement] [Condition:Expression] Step:Expression* Body:Statement;
+
+Block:Statement ::= Statements:Statement*;
+
+abstract Expression;
+EmptyExpression:Expression;
+
+Assignment:Expression ::= <Operator:spbeaver.BinaryOperator.BinaryOp> LHS:Expression RHS:Expression;
+TernaryExpression:Expression ::= Condition:Expression Left:Expression Right:Expression;
+BinaryExpression:Expression ::= <Operator:spbeaver.BinaryOperator.BinaryOp> LHS:Expression RHS:Expression;
+
+abstract Unary:Expression;
+UnaryExpr:Expression ::= <Operator:spbeaver.UnaryOperator.UnaryOp> Expr:Expression;
+IncDec:UnaryExpr ::= <Postfix:boolean>;
+SizeOf:Unary ::= Name:Identifier <Level:int>;
+UnsafeCast:Unary ::= <Label:String> Expr:Expression;
+
+abstract Primary:Expression;
+// FIXME: MethodName doesn't have to be a Prefix. Only Identifier allowed?
+// FIXME: Parser::primary() allows for 5(); or a[1][2](); function calls?!
+Call:Primary ::= MethodName:Expression Arguments:Expression*;
+Index:Primary ::= Base:Expression Index:Expression;
+
+
+abstract Prefix:Expression;
+Identifier:Prefix ::= <ID:String>;
+Label:Identifier;
+Parenthesis:Prefix ::= Expr:Expression;
+
+// Primitives
+abstract SPBoolean:Primitive;
+abstract Primitive:Expression;
+True:SPBoolean;
+False:SPBoolean;
+SPFloat:Primitive ::= <Float:String>;
+SPInteger:Primitive ::= <Integer:String>;
+SPString:Primitive ::= <String:String>;
+SPCharacter:Primitive ::= <Char:String>;
+
+ArrayLiteral:Primitive ::= Expressions:Expression* <RepeatLastElement:boolean>;
+StructInitializer:Primitive ::= Elements:StructElement*;
+StructElement ::= Identifier Value:Expression;
