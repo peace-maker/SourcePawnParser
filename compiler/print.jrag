@@ -161,13 +161,8 @@ aspect PrettyPrint {
   	if(hasCondition())
   		getCondition().print();
   	printer().append("; ");
-  	boolean addComma = false;
-  	for(Expression e: getSteps()) {
-  		if (addComma)
-  			printer().append(", ");
-  		e.print();
-  		addComma = true;
-  	}
+  	if(hasStep())
+  		getStep().print();
   	printer().append(")");
   	getBody().print();
   }
@@ -193,6 +188,28 @@ aspect PrettyPrint {
       s.print();
     }
   	printer().append(indent() + "}");
+  }
+  
+  public void If.print() {
+  	printer().append(indent());
+  	printer().append("if (");
+  	getCondition().print();
+  	printer().append(")");
+  	
+  	getTrueBranch().print();
+  	
+  	if(hasFalseBranch()) {
+  		printer().append(indent());
+  		printer().append("else");
+  		getFalseBranch().print();
+  	}
+  }
+  
+  public void Return.print() {
+  	printer().append("return");
+  	if (hasExpr())
+  		getExpr().print();
+  	printer().append(";");
   }
   
   abstract void Expression.print();

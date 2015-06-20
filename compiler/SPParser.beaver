@@ -16,8 +16,8 @@ package spbeaver;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
-%terminals FALSE, FOR;
-%terminals NEW, SIZEOF;
+%terminals ELSE, FALSE, FOR;
+%terminals IF, NEW, RETURN, SIZEOF;
 %terminals SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
 //%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG, ;
@@ -41,12 +41,14 @@ package spbeaver;
 %left QMARK, COLON;
 %left ASSIGN, ASSIGN_ADD, ASSIGN_SUB, ASSIGN_MUL, ASSIGN_DIV, ASSIGN_MOD, ASSIGN_BITAND, ASSIGN_BITOR, ASSIGN_BITXOR, ASSIGN_SHR, ASSIGN_SHRU, ASSIGN_SHL;
 
-%left INC, DEC, MINUS, BANG, TILDE;
+%right MINUS;
+%left INC, DEC, BANG, TILDE;
 %left LABEL;
 %left IDENTIFIER;
 
 %typeof Statement = "Statement";
 %typeof StatementList = "List<Statement>";
+%typeof StmtNoLocals = "Statement";
 %typeof Stmt = "Statement";
 %typeof LocalVarDecl = "Statement";
 %typeof Declaration = "Declaration";
@@ -55,14 +57,19 @@ package spbeaver;
 %typeof Init = "Expression";
 
 %typeof Block = "Statement";
+%typeof ExprStmt = "Statement";
 %typeof While = "Statement";
 %typeof DoWhile = "Statement";
 %typeof CaseList = "List<SwitchCase>";
 %typeof Switch = "Statement";
 %typeof DefaultCase = "Statement";
 %typeof For = "Statement";
+%typeof ForInit = "Statement";
+%typeof Return = "Statement";
+%typeof If = "Statement";
 
 %typeof Expression = "Expression";
+%typeof LeftHandSide = "Expression";
 %typeof Assignment = "Expression";
 %typeof AssignmentOperator = "BinaryOp";
 
@@ -114,19 +121,24 @@ Goal = StatementList.s {: return new SourcePawnFile(s); :}
 
 Statement = Stmt.stmt;
 // TODO: Save static or const qualifiers
-Stmt = Block
-	 | STATIC LocalVarDecl.var Term
+Stmt = STATIC LocalVarDecl.var Term
 	 | CONST LocalVarDecl.var Term
-	 | NEW LocalVarDecl.var Term
-	 | DECL LocalVarDecl.var Term
-	 | While
-	 | DoWhile Term
-	 | Switch
-	 | For
-	 | BREAK Term {: return new Break(); :}
-	 | CONTINUE Term {: return new Continue(); :}
-	 | Expression.a Term {: return new ExpressionStatement(a); :} // TODO: Why no Expression
+	 | Declarator LocalVarDecl.var Term
+	 | StmtNoLocals
 ;
+
+StmtNoLocals = Block
+			 | For
+			 | While
+			 | DoWhile.do Term
+			 | Switch
+			 | Return.return Term
+			 | If
+			 | BREAK Term {: return new Break(); :}
+			 | CONTINUE Term {: return new Continue(); :}
+			 | ExprStmt.exprstmt Term
+;
+
 
 StatementList = Statement.s
 			  {:
@@ -141,6 +153,14 @@ StatementList = Statement.s
 			  :}
 ;
 
+Block = LBRACE StatementList.l? RBRACE {: return new Block(l); :};
+
+ExprStmt = Assignment.a {: return new ExpressionStatement(a); :}; // TODO: Why no Expression
+
+//Modifiers = STATIC | CONST;
+Declarator = NEW | DECL;
+
+// TODO: Handle declaration lists seperated by COMMA
 LocalVarDecl = Declaration.decl Init.init? {: return new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()); :}
 ;
 Init = ASSIGN Expression.e // Initialization
@@ -168,14 +188,14 @@ OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 			:}
 ;
 
-While = WHILE LPAREN Expression.e RPAREN Statement.s {: return new While(e, s); :};
+While = WHILE LPAREN Expression.e RPAREN StmtNoLocals.s {: return new While(e, s); :};
 DoWhile = DO Block.s WHILE LPAREN Expression.e RPAREN {: return new DoWhile(e, s); :};
 
 Switch = SWITCH LPAREN Expression.e RPAREN LBRACE CaseList.cases DefaultCase.def? RBRACE
 	   {: return new Switch(e, cases, def==null?new Opt<Statement>():new Opt<Statement>(def)); :}
 ;
 // FIXME: Handle LABEL matches for |Identifier:| cases
-CaseList = CASE Label.label Statement.s
+CaseList = CASE Label.label StmtNoLocals.s
 		 {:
 		 	List<SwitchCase> l = new List<>();
 		 	List<Expression> e = new List<>();
@@ -183,40 +203,40 @@ CaseList = CASE Label.label Statement.s
 		 	l.add(new SwitchCase(e, s));
 		 	return new Symbol(l);
 		 :} 
-		 | CASE ExpressionList.e COMMA Label.label Statement.s
+		 | CASE ExpressionList.e COMMA Label.label StmtNoLocals.s
 		 {:
 		 	List<SwitchCase> l = new List<>();
 		 	e.add(new Identifier(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return new Symbol(l);
 		 :}
-		 | CASE ExpressionList.e COLON Statement.s
+		 | CASE ExpressionList.e COLON StmtNoLocals.s
 		 {:
 		 	List<SwitchCase> l = new List<>();
 		 	l.add(new SwitchCase(e, s));
 		 	return new Symbol(l);
 		 :}
-		 | CaseList.l CASE Label.label Statement.s
+		 | CaseList.l CASE Label.label StmtNoLocals.s
 		 {:
 		 	List<Expression> e = new List<>();
 		 	e.add(new Identifier(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return _symbol_l;
 		 :}
-		 | CaseList.l CASE ExpressionList.e COMMA Label.label Statement.s
+		 | CaseList.l CASE ExpressionList.e COMMA Label.label StmtNoLocals.s
 		 {:
 		 	e.add(new Identifier(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return _symbol_l;
 		 :}
-		 | CaseList.l CASE ExpressionList.e COLON Statement.s
+		 | CaseList.l CASE ExpressionList.e COLON StmtNoLocals.s
 		 {:
 		 	l.add(new SwitchCase(e, s));
 		 	return _symbol_l;
 		 :}
 ;
-DefaultCase = DEFAULT COLON Statement.s
-			| Label.l Statement.s
+DefaultCase = DEFAULT COLON StmtNoLocals.s
+			| Label.l StmtNoLocals.s
 			{:
 				// FIXME: catch actual errors.
 				if(!l.getID().equals("default"))
@@ -225,16 +245,28 @@ DefaultCase = DEFAULT COLON Statement.s
 			:}
 ;
 
-For = FOR LPAREN Statement.init SEMICOLON Expression.cond SEMICOLON ExpressionList.step RPAREN Statement.body
+// TODO: allow multiple step expression statements seperated by COMMA
+For = FOR LPAREN ForInit.init? SEMICOLON Expression.cond? SEMICOLON ExprStmt.step? RPAREN StmtNoLocals.body
 	{: return new ForLoop(init==null?new Opt<Statement>():new Opt<Statement>(init), 
 						  cond==null?new Opt<Expression>():new Opt<Expression>(cond), 
-						  step, 
+						  step==null?new Opt<Statement>():new Opt<Statement>(step), 
 						  body); 
 	:}
 ;
+ForInit = Declarator LocalVarDecl | ExprStmt;
 
-Block = LBRACE StatementList.l RBRACE {: return new Block(l); :};
+Return = RETURN Expression.e? {: return new Return(e==null?new Opt<Expression>():new Opt<Expression>(e)); :};
 
+If = IF LPAREN Expression.cond RPAREN StmtNoLocals.trueBranch
+   {:
+   		return new If(cond, trueBranch, new Opt<Statement>());	
+   :}
+   | If.outer ELSE StmtNoLocals.falseBranch
+   {:
+   		((If) outer).setFalseBranch(falseBranch);
+   		return _symbol_outer;
+   :}
+;
 
 // EXPRESSIONS
 Expression = Assignment;
@@ -251,10 +283,14 @@ ExpressionList = Expression.e
 			   	:}
 ;
 
+LeftHandSide = Identifier
+			 | ArrayAccess
+;
+
 Assignment = Ternary
-		   | Assignment.as AssignmentOperator.op Ternary.rhs
+		   | LeftHandSide.lhs AssignmentOperator.op Assignment.rhs
 		   {:
-		   		return new Assignment(op, as, rhs);
+		   		return new Assignment(op, lhs, rhs);
 		   :}
 ;
 
@@ -273,12 +309,12 @@ AssignmentOperator = ASSIGN {: return new Symbol(BinaryOp.NONE); :}
 ;
 
 Ternary = Or
-		//| Or.cond QMARK LABEL.l Expression.right
+		//| Or.cond QMARK Label.l Expression.right
 		//{:
 			// A ? B:C would normally get evaluated as NAME QMARK LABEL NAME, but we
     		// special case it here so that the LABEL becomes NAME and the colon gets
     		// stolen.
-		//	return new TernaryExpression(cond, new Identifier(l.substring(0, l.length()-2)), right);
+		//	return new TernaryExpression(cond, new Identifier(l.getID()), right);
 		//:}
 		| Or.cond QMARK Expression.left COLON Expression.right
 		{:
@@ -286,19 +322,19 @@ Ternary = Or
 		:}
 ;
 Or = And
-   | And.lhs LOGICOR And.rhs
+   | And.lhs LOGICOR Or.rhs
    {:
    		return new BinaryExpression(BinaryOp.OR, lhs, rhs);
    :}
 ;
 And = Equals
-    | Equals.lhs LOGICAND Equals.rhs
+    | Equals.lhs LOGICAND And.rhs
     {:
     	return new BinaryExpression(BinaryOp.AND, lhs, rhs);
     :}
 ;
 Equals = Relational
-		 | Relational.lhs EqualsOperator.op Relational.rhs
+		 | Relational.lhs EqualsOperator.op Equals.rhs
 		 {:
 		 	return new BinaryExpression(op, lhs, rhs);
 		 :}
@@ -308,7 +344,7 @@ EqualsOperator = EQ {: return new Symbol(BinaryOp.EQ); :}
 ;
 
 Relational = BitOr
-		   | BitOr.lhs RelationalOperator.op BitOr.rhs
+		   | BitOr.lhs RelationalOperator.op BitOr.rhs // FIXME: error report: don't allow chained relationals a < b > c
 		   {:
 		  		return new BinaryExpression(op, lhs, rhs);
 		   :}
@@ -320,26 +356,26 @@ RelationalOperator = LT {: return new Symbol(BinaryOp.LT); :}
 ;
 
 BitOr = BitXor
-	   | BitXor.lhs BITOR BitXor.rhs
+	   | BitXor.lhs BITOR BitOr.rhs
 	   {:
 	   		return new BinaryExpression(BinaryOp.BITOR, lhs, rhs);
 	   :}
 ;
 BitXor = BitAnd
-	   | BitAnd.lhs BITXOR BitAnd.rhs
+	   | BitAnd.lhs BITXOR BitXor.rhs
 	   {:
 	   		return new BinaryExpression(BinaryOp.BITXOR, lhs, rhs);
 	   :}
 ;
 BitAnd = Shift
-	   | Shift.lhs AMPERSAND Shift.rhs
+	   | Shift.lhs AMPERSAND BitAnd.rhs
 	   {:
 	   		return new BinaryExpression(BinaryOp.BITAND, lhs, rhs);
 	   :}
 ;
 
 Shift = Addition
-	  | Addition.lhs ShiftOperator.op Addition.rhs
+	  | Addition.lhs ShiftOperator.op Shift.rhs
 	  {:
 	  	return new BinaryExpression(op, lhs, rhs);
 	  :}
@@ -349,7 +385,7 @@ ShiftOperator = SHL {: return new Symbol(BinaryOp.SHL); :}
 			  | SHRU {: return new Symbol(BinaryOp.SHRU); :}
 ;
 Addition = Multiplication
-		 | Multiplication.lhs AdditionOperator.op Multiplication.rhs
+		 | Multiplication.lhs AdditionOperator.op Addition.rhs
 		 {:
 		 	return new BinaryExpression(op, lhs, rhs);
 		 :}
@@ -359,7 +395,7 @@ AdditionOperator = PLUS {: return new Symbol(BinaryOp.PLUS); :}
 ;
 
 Multiplication = Unary
-			   | Unary.lhs MultiplicationOperator.op Unary.rhs
+			   | Unary.lhs MultiplicationOperator.op Multiplication.rhs
 			   {:
 			   		return new BinaryExpression(op, lhs, rhs);
 			   :}
@@ -384,7 +420,6 @@ Unary = INC Unary.u {: return new IncDec(UnaryOp.INC, u, false); :} // Increment
 	  | TILDE Unary.u {: return new UnaryExpr(UnaryOp.COMPL, u); :}// Complement
 	  | SIZEOF SizeOf.s        // sizeof expression
 	  //| Label.l Unary.u {: return new UnsafeCast(l, u); :}// unsafe cast
-	  // no view_as support yet.
 	  | Postfix
 ;
 
@@ -392,9 +427,9 @@ Postfix = Primary.p INC {: return new IncDec(UnaryOp.INC, p, true); :}
 	  	| Primary.p DEC {: return new IncDec(UnaryOp.DEC, p, true); :}
 	  	| Primary
 ;
-Primary = Prefix.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l); :} // function call
+Primary = Prefix
+		| Prefix.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l); :} // function call
 		| ArrayAccess // (multi) array element
-		| Prefix
 ;
 
 ArrayAccess = Prefix.base LBRACKET Expression.e RBRACKET
@@ -409,6 +444,7 @@ ArrayAccess = Prefix.base LBRACKET Expression.e RBRACKET
 
 Prefix = LPAREN Expression.e RPAREN {: return new Parenthesis(e); :}
 	   | Identifier
+	   // no view_as support yet.
 	   | Primitive
 ;
 Primitive = FLOATLIT.f {: return new SPFloat(f); :}
@@ -416,16 +452,17 @@ Primitive = FLOATLIT.f {: return new SPFloat(f); :}
 		  | Boolean
 		  | STRINGLIT.s {: return new SPString(s); :}
 		  | CHARLIT.s {: return new SPString(s); :}
-		  | CompoundLiteral
+		  | LBRACE CompoundLiteral
 ;
 Boolean = TRUE {: return new True(); :}
 		| FALSE {: return new False(); :}
 ;
 
-CompoundLiteral = LBRACE StructInitializer.s COMMA? RBRACE {: return new StructInitializer(s); :}
-				| LBRACE ELLIPSES.e? RBRACE {: return new ArrayLiteral(new List(), e.value != null); :}
-				| LBRACE ExpressionList.l COMMA ELLIPSES.e RBRACE {: return new ArrayLiteral(l, true); :}
-				| LBRACE ExpressionList.l RBRACE {: return new ArrayLiteral(l, false); :}
+CompoundLiteral = StructInitializer.s COMMA? RBRACE {: return new StructInitializer(s); :}
+				| ELLIPSES RBRACE {: return new ArrayLiteral(new List(), true); :}
+				| RBRACE {: return new ArrayLiteral(new List(), true); :}
+				| ExpressionList.l COMMA ELLIPSES.e RBRACE {: return new ArrayLiteral(l, true); :}
+				| ExpressionList.l RBRACE {: return new ArrayLiteral(l, false); :}
 ;
 StructInitializer = Identifier.id ASSIGN Expression.e
 				  {:

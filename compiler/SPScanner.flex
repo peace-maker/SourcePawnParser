@@ -118,7 +118,7 @@ MultiComment   = "/*" ~"*/"
 "decl" { return sym(Terminals.DECL); }
 "default" { return sym(Terminals.DEFAULT); }
 "do" { return sym(Terminals.DO); }
-//"else" { return sym(Terminals.ELSE); }
+"else" { return sym(Terminals.ELSE); }
 //"enum" { return sym(Terminals.ENUM); }
 "false" { return sym(Terminals.FALSE); }
 "for" { return sym(Terminals.FOR); }
@@ -127,12 +127,12 @@ MultiComment   = "/*" ~"*/"
 //"functag" { return sym(Terminals.FUNCTAG); }
 //"function" { return sym(Terminals.FUNCTION); }
 //"goto" { return sym(Terminals.GOTO); }
-//"if" { return sym(Terminals.IF); }
+"if" { return sym(Terminals.IF); }
 //"native" { return sym(Terminals.NATIVE); }
 "new" { return sym(Terminals.NEW); }
 //"operator" { return sym(Terminals.OPERATOR); }
 //"public" { return sym(Terminals.PUBLIC); }
-//"return" { return sym(Terminals.RETURN); }
+"return" { return sym(Terminals.RETURN); }
 "sizeof" { return sym(Terminals.SIZEOF); }
 //"stock" { return sym(Terminals.STOCK); }
 //"struct" { return sym(Terminals.STRUCT); }
