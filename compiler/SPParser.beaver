@@ -16,7 +16,7 @@ package spbeaver;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
-%terminals ELSE, FALSE, FOR;
+%terminals ELSE, ENUM, FALSE, FOR;
 %terminals IF, NEW, RETURN, SIZEOF;
 %terminals SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
@@ -67,6 +67,9 @@ package spbeaver;
 %typeof ForInit = "Statement";
 %typeof Return = "Statement";
 %typeof If = "Statement";
+
+%typeof Enum = "Statement";
+%typeof EnumConstant = "List<EnumConstant>";
 
 %typeof Expression = "Expression";
 %typeof LeftHandSide = "Expression";
@@ -136,6 +139,7 @@ StmtNoLocals = Block
 			 | If
 			 | BREAK Term {: return new Break(); :}
 			 | CONTINUE Term {: return new Continue(); :}
+			 | Enum.enum Term
 			 | ExprStmt.exprstmt Term
 ;
 
@@ -168,8 +172,8 @@ Init = ASSIGN Expression.e // Initialization
 
 Declaration = OldDeclVar;
 
-OldDeclVar = CONST.c? Label.label? Identifier.name OldArrayDim.dims?
-			{: return new Declaration(name, label==null?new Opt<Label>():new Opt<Label>(label), c.value != null, dims==null?new List():dims); :}
+OldDeclVar = Label.label? Identifier.name OldArrayDim.dims?
+			{: return new Declaration(name, label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims); :}
 ;
 
 //OldDeclArg = CONST? AMPERSAND? Label? ELLIPSES // Variadic
@@ -267,6 +271,24 @@ If = IF LPAREN Expression.cond RPAREN StmtNoLocals.trueBranch
    		return _symbol_outer;
    :}
 ;
+
+Enum = ENUM Identifier.name? LBRACE EnumConstant.constants? COMMA? RBRACE
+	{: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
+;
+
+EnumConstant = Declaration.decl Init.init?
+			{:
+				List<EnumConstant> l = new List<>();
+				l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
+				return new Symbol(l);
+			:}
+			| EnumConstant.l COMMA Declaration.decl Init.init?
+			{:
+				l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
+				return _symbol_l;
+			:}
+;
+
 
 // EXPRESSIONS
 Expression = Assignment;

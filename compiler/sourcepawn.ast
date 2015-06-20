@@ -8,7 +8,7 @@ Break:Statement;
 Continue:Statement;
 ExpressionStatement:Statement ::= Expr:Expression;
 
-Declaration ::= Name:Identifier [Label:Label] <IsConst:boolean> Dims:Expression*;
+Declaration ::= Name:Identifier [Label:Label] Dims:Expression*;
 VarDecl:Statement ::= Var:Declaration [Init:Expression];
 
 While:Statement ::= Condition:Expression Body:Statement;
@@ -22,6 +22,9 @@ Return:Statement ::= [Expr:Expression];
 If:Statement ::= Condition:Expression TrueBranch:Statement [FalseBranch:Statement];
 
 Block:Statement ::= Statements:Statement*;
+
+EnumStatement:Statement ::= [Name:Identifier] Constants:EnumConstant*;
+EnumConstant:Statement ::= Decl:Declaration [Init:Expression];
 
 abstract Expression;
 EmptyExpression:Expression;

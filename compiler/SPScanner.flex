@@ -119,7 +119,7 @@ MultiComment   = "/*" ~"*/"
 "default" { return sym(Terminals.DEFAULT); }
 "do" { return sym(Terminals.DO); }
 "else" { return sym(Terminals.ELSE); }
-//"enum" { return sym(Terminals.ENUM); }
+"enum" { return sym(Terminals.ENUM); }
 "false" { return sym(Terminals.FALSE); }
 "for" { return sym(Terminals.FOR); }
 //"forward" { return sym(Terminals.FORWARD); }
