@@ -12,4 +12,6 @@ public class DeclFlags {
 	
 	public static final int NATIVE = (1<<7);
 	public static final int FORWARD = (1<<8);
+	
+	public static final int INLINE = (1<<9);
 }

@@ -59,7 +59,7 @@ public class BinaryOperator {
 		case GE:
 			return ">=";
 		case EQ:
-			return "=";
+			return "==";
 		case NE:
 			return "!=";
 		case OR:

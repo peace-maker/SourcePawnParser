@@ -1,6 +1,6 @@
 aspect PrettyPrint {
   public class PrettyPrinter {
-    public static String INDENT = "  ";
+    public static String INDENT = "\t";
   	private StringBuilder sb;
   	public PrettyPrinter(){
   		sb = new StringBuilder();
@@ -25,16 +25,26 @@ aspect PrettyPrint {
   	  if(getParent() == null)
    		   return "";
       String indent = getParent().extractIndent();
+      
+      if(getParent().addsIndentationLevel() && this instanceof Block)
+      	return indent;
+      
       if(getParent().addsIndentationLevel())
       	indent += PrettyPrinter.INDENT;
       return indent;
   }
 
   syn boolean ASTNode.addsIndentationLevel() = false;
+  eq Opt.addsIndentationLevel() = getParent().addsIndentationLevel();
   eq Block.addsIndentationLevel() = true;
   eq Switch.addsIndentationLevel() = true;
   eq SwitchCase.addsIndentationLevel() = true;
   eq EnumStatement.addsIndentationLevel() = true;
+  eq If.addsIndentationLevel() = true;
+  eq While.addsIndentationLevel() = true;
+  eq DoWhile.addsIndentationLevel() = true;
+  eq ForLoop.addsIndentationLevel() = true;
+  //eq Method.addsIndentationLevel() = true;
 
   syn lazy PrettyPrinter SourcePawnFile.printer() {
   	return new PrettyPrinter();
@@ -74,7 +84,10 @@ aspect PrettyPrint {
   }
 
   public void VarDecl.print() {
-  	printer().append(indent());
+  
+  	if ((getVar().getFlags() & DeclFlags.INLINE) == 0)
+  		printer().append(indent());
+  	
   	if ((getVar().getFlags() & DeclFlags.STATIC) > 0)
   		printer().append("static ");
   	// TODO: handle |static stock|
@@ -90,7 +103,14 @@ aspect PrettyPrint {
 	  	printer().append(" = ");
 	  	getInit().print();
 	}
-	printer().append(";");
+	
+	if (hasNext()) {
+		printer().append(", ");
+		getNext().print();
+	}
+	
+	if ((getVar().getFlags() & DeclFlags.INLINE) == 0)
+		printer().append(";");
   }
   
   public void Declaration.print() {
@@ -99,7 +119,10 @@ aspect PrettyPrint {
   	if(hasLabel())
   		getLabel().print();
   	
-  	getName().print();
+  	if (hasName())
+  		getName().print();
+  	else if ((getFlags() & DeclFlags.VARIADIC) > 0)
+  		printer().append("...");
   	
   	for(Expression o: getDimss()) {
   		printer().append("[");
@@ -173,21 +196,6 @@ aspect PrettyPrint {
   		getStep().print();
   	printer().append(")");
   	getBody().print();
-  }
-  
-  // Special formatting case for switch cases and single statements
-  // Don't indent, if it's a block as case body.
-  public String Statement.extractIndent() {
-  	  if(getParent() == null)
-   		   return "";
-      String indent = getParent().extractIndent();
-      
-      if(getParent() instanceof SwitchCase && this instanceof Block)
-      	return indent;
-      
-      if(getParent().addsIndentationLevel())
-      	indent += PrettyPrinter.INDENT;
-      return indent;
   }
   
   public void Block.print() {

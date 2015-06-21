@@ -9,7 +9,7 @@ Continue:Statement;
 ExpressionStatement:Statement ::= Expr:Expression;
 
 Declaration ::= [Name:Identifier] [Label:Label] Dims:Expression* <Flags:int>;
-VarDecl:Statement ::= Var:Declaration [Init:Expression];
+VarDecl:Statement ::= Var:Declaration [Init:Expression] [Next:VarDecl];
 
 Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement];
 

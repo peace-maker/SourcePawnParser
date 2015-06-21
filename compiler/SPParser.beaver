@@ -53,7 +53,7 @@ package spbeaver;
 %typeof StmtNoLocals = "Statement";
 %typeof Stmt = "Statement";
 %typeof LocalVariable = "Statement";
-%typeof LocalVarDecl = "Statement";
+%typeof LocalVarDecl = "VarDecl";
 %typeof Declaration = "Declaration";
 %typeof OldDeclVar = "Declaration";
 %typeof OldArrayDim = "List";
@@ -166,7 +166,6 @@ StmtNoLocals = Block
 			 | ExprStmt.exprstmt Term
 ;
 
-
 StatementList = Statement.s
 			  {:
 			  	List<Statement> l = new List<>();
@@ -180,6 +179,7 @@ StatementList = Statement.s
 			  :}
 ;
 
+// TODO: Allow empty blocks
 Block = LBRACE StatementList.l? RBRACE {: return new Block(l); :};
 
 ExprStmt = Assignment.a {: return new ExpressionStatement(a); :}; // TODO: Why no Expression
@@ -204,8 +204,20 @@ LocalVariable = Modifiers.m LocalVarDecl.d
 			  | Declarator LocalVarDecl.d
 ;
 
-// TODO: Handle declaration lists seperated by COMMA
-LocalVarDecl = Declaration.decl Init.init? {: return new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()); :}
+LocalVarDecl = Declaration.decl Init.init? 
+			{: 
+				return new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>());
+			:}
+			| LocalVarDecl.prev COMMA Declaration.decl Init.init?
+			{:
+			  	decl.setFlags( (decl.getFlags() | DeclFlags.INLINE) & ~DeclFlags.NEW );
+				VarDecl d = new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>());
+				VarDecl next = prev;
+				while(next.hasNext())
+					next = next.getNext();
+				next.setNext(d);
+				return _symbol_prev;
+			:}
 ;
 Init = ASSIGN Expression.e // Initialization
 ;
@@ -254,12 +266,14 @@ OldDeclArg = Label.label? ELLIPSES // Variadic
 Arguments = OldDeclArg.decl Init.init?
 		  {:
 		  		List<VarDecl> l = new List<>();
-		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()));
+			  	decl.setFlags( decl.getFlags() | DeclFlags.INLINE );
+		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>()));
 		  		return new Symbol(l);
 		  :}
 		  | Arguments.l COMMA OldDeclArg.decl Init.init?
 		  {:
-		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()));
+			  	decl.setFlags( decl.getFlags() | DeclFlags.INLINE );
+		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>()));
 		  		return _symbol_l;
 		  :}
 ;
@@ -359,7 +373,13 @@ For = FOR LPAREN ForInit.init? SEMICOLON Expression.cond? SEMICOLON ExprStmt.ste
 						  body); 
 	:}
 ;
-ForInit = Declarator LocalVarDecl | ExprStmt;
+ForInit = Declarator LocalVarDecl.d
+		{:
+			Declaration decl = ((VarDecl)d).getVar();
+	  		decl.setFlags( decl.getFlags() | DeclFlags.INLINE );
+	  		return _symbol_d;
+		:}
+		| ExprStmt;
 
 Return = RETURN Expression.e? {: return new Return(e==null?new Opt<Expression>():new Opt<Expression>(e)); :};
 
