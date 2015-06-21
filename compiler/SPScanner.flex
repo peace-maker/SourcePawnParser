@@ -54,12 +54,15 @@ Label          = {Identifier} :
 LineComment    = "//" {InputCharacter}* {LineTerminator}?
 MultiComment   = "/*" ~"*/"
 
+Preprocessor   = # {InputCharacter}* {LineTerminator}?
+
 %%
 
 // discard whitespace information and comments
 {LineComment} { }
 {MultiComment} { }
 {WhiteSpace} { }
+{Preprocessor} { }
 
 // Keywords
 "aquire" | // R

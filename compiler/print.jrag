@@ -214,9 +214,12 @@ aspect PrettyPrint {
   }
   
   public void Return.print() {
+  	printer().append(indent());
   	printer().append("return");
-  	if (hasExpr())
+  	if (hasExpr()) {
+  		printer().append(" ");
   		getExpr().print();
+  	}
   	printer().append(";");
   }
   

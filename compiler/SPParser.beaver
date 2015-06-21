@@ -218,27 +218,36 @@ OldDeclVar = Label.label? Identifier.name OldArrayDim.dims?
 
 OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 			{: List l = new List();
-			   	l.add(e);
+			   	l.add(e==null?new EmptyExpression():e);
 			   	return l;
 			:}
 			| OldArrayDim.dims LBRACKET Expression.e? RBRACKET
 			{:
-			   	dims.add(e);
+			   	dims.add(e==null?new EmptyExpression():e);
 			   	return _symbol_dims;
 			:}
 ;
 
 // Functions
-OldDeclArg = AMPERSAND.amp? Label.label? ELLIPSES // Variadic
+OldDeclArg = Label.label? ELLIPSES // Variadic
 		   {:
-		   		int flags = amp != null ? DeclFlags.REFERENCE : DeclFlags.NONE;
-		   		flags |= DeclFlags.VARIADIC;
-		   		return new Declaration(new Opt<Identifier>(), label==null?new Opt<Label>():new Opt<Label>(label), new List(), flags);
+		   		return new Declaration(new Opt<Identifier>(), label==null?new Opt<Label>():new Opt<Label>(label), new List(), DeclFlags.VARIADIC);
 		   :}
-		   | AMPERSAND.amp? Label.label? Identifier.name OldArrayDim.dims?
+		   | CONST AMPERSAND Label.label? Identifier.name OldArrayDim.dims?
 		   {:
-		   		int flags = amp != null ? DeclFlags.REFERENCE : DeclFlags.NONE;
-		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, flags);
+		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
+		   :}
+		   | CONST Label.label? Identifier.name OldArrayDim.dims?
+		   {:
+		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.CONST);
+		   :}
+		   | AMPERSAND Label.label? Identifier.name OldArrayDim.dims?
+		   {:
+		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE);
+		   :}
+		   | Label.label? Identifier.name OldArrayDim.dims?
+		   {:
+		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NONE);
 		   :}
 ;
 
@@ -258,7 +267,7 @@ Arguments = OldDeclArg.decl Init.init?
 MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced blocks.
 
 // FIXME: Make modifiers and label optional
-Method = Modifiers.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+Method = Modifiers.mod Label.label? Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 		{:
 			return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), mod==null?DeclFlags.NONE:mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 		:}
@@ -281,6 +290,7 @@ Global = LocalVariable.v Term
 	   | NativeDecl.n Term
 	   | ForwardDecl.f Term
 	   | Method
+	   | Enum.enum Term
 ;
 
 // Statements
@@ -542,7 +552,7 @@ Postfix = Primary.p INC {: return new IncDec(UnaryOp.INC, p, true); :}
 	  	| Primary
 ;
 Primary = Prefix
-		| Prefix.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l); :} // function call
+		| Prefix.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l==null?new List<Expression>():l); :} // function call
 		| ArrayAccess // (multi) array element
 ;
 
