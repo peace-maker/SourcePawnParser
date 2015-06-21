@@ -4,6 +4,7 @@ package spbeaver;
 
 %import "spbeaver.UnaryOperator.UnaryOp";
 %import "spbeaver.BinaryOperator.BinaryOp";
+%import "spbeaver.DeclFlags";
 %import "java.util.HashMap";
 
 %terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL;
@@ -16,11 +17,11 @@ package spbeaver;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
-%terminals ELSE, ENUM, FALSE, FOR;
-%terminals IF, NEW, RETURN, SIZEOF;
-%terminals SWITCH, STATIC, TRUE, WHILE;
+%terminals ELSE, ENUM, FALSE, FOR, FORWARD;
+%terminals IF, NATIVE, NEW, PUBLIC, RETURN, SIZEOF;
+%terminals STOCK, SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
-//%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG, ;
+//%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG, FUNCTION;
 //%terminals GOTO, IF, NATIVE, NEW, OPERATOR, PUBLIC, RETURN, SIZEOF;
 //%terminals STOCK, STRUCT, SWITCH, TAGOF, STATIC, TRUE, WHILE;
 
@@ -46,15 +47,27 @@ package spbeaver;
 %left LABEL;
 %left IDENTIFIER;
 
+%typeof GlobalStatementList = "List<Statement>";
 %typeof Statement = "Statement";
 %typeof StatementList = "List<Statement>";
 %typeof StmtNoLocals = "Statement";
 %typeof Stmt = "Statement";
+%typeof LocalVariable = "Statement";
 %typeof LocalVarDecl = "Statement";
 %typeof Declaration = "Declaration";
 %typeof OldDeclVar = "Declaration";
 %typeof OldArrayDim = "List";
 %typeof Init = "Expression";
+
+%typeof Modifiers = "Integer";
+%typeof Declarator = "Integer";
+%typeof OldDeclArg = "Declaration";
+%typeof Arguments = "List<VarDecl>";
+%typeof MethodBody = "Statement";
+%typeof Method = "Statement";
+%typeof NativeDecl = "Statement";
+%typeof ForwardDecl = "Statement";
+%typeof Global = "Statement";
 
 %typeof Block = "Statement";
 %typeof ExprStmt = "Statement";
@@ -119,14 +132,24 @@ package spbeaver;
 %typeof Goal = "SourcePawnFile";
 %goal Goal;
 
-Goal = StatementList.s {: return new SourcePawnFile(s); :}
+Goal = GlobalStatementList.s {: return new SourcePawnFile(s); :}
+;
+
+GlobalStatementList = Global.g
+					{:
+						List<Statement> l = new List<>();
+						l.add(g);
+						return new Symbol(l);
+					:}
+					| GlobalStatementList.l Global.g
+					{:
+						l.add(g);
+						return _symbol_l;
+					:}
 ;
 
 Statement = Stmt.stmt;
-// TODO: Save static or const qualifiers
-Stmt = STATIC LocalVarDecl.var Term
-	 | CONST LocalVarDecl.var Term
-	 | Declarator LocalVarDecl.var Term
+Stmt = LocalVariable.v Term
 	 | StmtNoLocals
 ;
 
@@ -161,8 +184,25 @@ Block = LBRACE StatementList.l? RBRACE {: return new Block(l); :};
 
 ExprStmt = Assignment.a {: return new ExpressionStatement(a); :}; // TODO: Why no Expression
 
-//Modifiers = STATIC | CONST;
-Declarator = NEW | DECL;
+Modifiers = STATIC {: return new Symbol(DeclFlags.STATIC); :} 
+		  | CONST {: return new Symbol(DeclFlags.CONST); :}
+		  | PUBLIC {: return new Symbol(DeclFlags.PUBLIC); :}
+		  | STOCK {: return new Symbol(DeclFlags.STOCK); :}
+;
+
+Declarator = NEW {: return new Symbol(DeclFlags.NONE); :}
+		   | DECL {: return new Symbol(DeclFlags.NONE); :}
+;
+
+LocalVariable = Modifiers.m LocalVarDecl.d 
+			  {:
+			  		// Add modifier flags to declaration
+			  		Declaration decl = ((VarDecl)d).getVar();
+			  		decl.setFlags( decl.getFlags() | m );
+			  		return _symbol_d;
+			  :}
+			  | Declarator LocalVarDecl.d
+;
 
 // TODO: Handle declaration lists seperated by COMMA
 LocalVarDecl = Declaration.decl Init.init? {: return new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()); :}
@@ -173,12 +213,8 @@ Init = ASSIGN Expression.e // Initialization
 Declaration = OldDeclVar;
 
 OldDeclVar = Label.label? Identifier.name OldArrayDim.dims?
-			{: return new Declaration(name, label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims); :}
+			{: return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NEW); :}
 ;
-
-//OldDeclArg = CONST? AMPERSAND? Label? ELLIPSES // Variadic
-//		   | CONST? AMPERSAND? Label? Identifier OldArrayDim?
-//;
 
 OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 			{: List l = new List();
@@ -192,6 +228,62 @@ OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 			:}
 ;
 
+// Functions
+OldDeclArg = AMPERSAND.amp? Label.label? ELLIPSES // Variadic
+		   {:
+		   		int flags = amp != null ? DeclFlags.REFERENCE : DeclFlags.NONE;
+		   		flags |= DeclFlags.VARIADIC;
+		   		return new Declaration(new Opt<Identifier>(), label==null?new Opt<Label>():new Opt<Label>(label), new List(), flags);
+		   :}
+		   | AMPERSAND.amp? Label.label? Identifier.name OldArrayDim.dims?
+		   {:
+		   		int flags = amp != null ? DeclFlags.REFERENCE : DeclFlags.NONE;
+		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, flags);
+		   :}
+;
+
+Arguments = OldDeclArg.decl Init.init?
+		  {:
+		  		List<VarDecl> l = new List<>();
+		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()));
+		  		return new Symbol(l);
+		  :}
+		  | Arguments.l COMMA OldDeclArg.decl Init.init?
+		  {:
+		  		l.add(new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>()));
+		  		return _symbol_l;
+		  :}
+;
+
+MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced blocks.
+
+// FIXME: Make modifiers and label optional
+Method = Modifiers.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+		{:
+			return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), mod==null?DeclFlags.NONE:mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+		:}
+;
+
+
+NativeDecl = NATIVE Label.label? Identifier.name LPAREN Arguments.args? RPAREN
+		  {:
+		  		return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+		  :}
+;
+
+ForwardDecl = FORWARD Label.label? Identifier.name LPAREN Arguments.args? RPAREN
+			{:
+				return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
+			:}
+;
+
+Global = LocalVariable.v Term
+	   | NativeDecl.n Term
+	   | ForwardDecl.f Term
+	   | Method
+;
+
+// Statements
 While = WHILE LPAREN Expression.e RPAREN StmtNoLocals.s {: return new While(e, s); :};
 DoWhile = DO Block.s WHILE LPAREN Expression.e RPAREN {: return new DoWhile(e, s); :};
 

@@ -1,5 +1,6 @@
 import spbeaver.UnaryOperator.UnaryOp;
 import spbeaver.BinaryOperator.BinaryOp;
+import spbeaver.DeclFlags;
 import java.util.HashMap;
 
 aspect ToString {

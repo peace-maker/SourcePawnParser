@@ -8,8 +8,10 @@ Break:Statement;
 Continue:Statement;
 ExpressionStatement:Statement ::= Expr:Expression;
 
-Declaration ::= Name:Identifier [Label:Label] Dims:Expression*;
+Declaration ::= [Name:Identifier] [Label:Label] Dims:Expression* <Flags:int>;
 VarDecl:Statement ::= Var:Declaration [Init:Expression];
+
+Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement];
 
 While:Statement ::= Condition:Expression Body:Statement;
 DoWhile:While;

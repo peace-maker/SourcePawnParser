@@ -75,7 +75,16 @@ aspect PrettyPrint {
 
   public void VarDecl.print() {
   	printer().append(indent());
-  	printer().append("new ");
+  	if ((getVar().getFlags() & DeclFlags.STATIC) > 0)
+  		printer().append("static ");
+  	// TODO: handle |static stock|
+  	else if ((getVar().getFlags() & DeclFlags.STOCK) > 0)
+  		printer().append("stock ");
+  	else if ((getVar().getFlags() & DeclFlags.CONST) > 0)
+  		printer().append("const ");
+  	else if ((getVar().getFlags() & DeclFlags.NEW) > 0)
+  		printer().append("new ");
+  	
 	getVar().print();
 	if(getInit() != null) {
 	  	printer().append(" = ");
@@ -85,6 +94,8 @@ aspect PrettyPrint {
   }
   
   public void Declaration.print() {
+	if ((getFlags() & DeclFlags.REFERENCE) > 0)
+  		printer().append("&");
   	if(hasLabel())
   		getLabel().print();
   	
@@ -237,6 +248,39 @@ aspect PrettyPrint {
   		printer().append(" = ");
   		getInit().print();
   	}
+  }
+  
+  public void Method.print() {
+  	printer().append(indent());
+  	if ((getFlags() & DeclFlags.NATIVE) > 0)
+  		printer().append("native ");
+  	if ((getFlags() & DeclFlags.FORWARD) > 0)
+  		printer().append("forward ");
+  	if ((getFlags() & DeclFlags.PUBLIC) > 0)
+  		printer().append("public ");
+  	if ((getFlags() & DeclFlags.STATIC) > 0)
+  		printer().append("static ");
+	if ((getFlags() & DeclFlags.STOCK) > 0)
+  		printer().append("stock ");
+  	
+  	if(hasLabel())
+  		getLabel().print();
+  	getName().print();
+  	
+  	printer().append("(");
+  	boolean addComma = false;
+  	for(VarDecl decl: getArgss()) {
+  		if (addComma)
+  			printer().append(", ");
+  		decl.print();
+  		addComma = true;
+  	}
+  	printer().append(")");
+  	
+  	if (hasBody())
+  		getBody().print();
+  	else
+  		printer().append(";");
   }
   
   abstract void Expression.print();
