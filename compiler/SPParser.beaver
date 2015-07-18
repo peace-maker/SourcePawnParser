@@ -52,6 +52,9 @@ package spbeaver;
 %typeof StatementList = "List<Statement>";
 %typeof StmtNoLocals = "Statement";
 %typeof Stmt = "Statement";
+%typeof GlobalVariable = "Statement";
+%typeof GlobalVarDecl = "VarDecl";
+%typeof GlobalInit = "Expression";
 %typeof LocalVariable = "Statement";
 %typeof LocalVarDecl = "VarDecl";
 %typeof Declaration = "Declaration";
@@ -194,6 +197,52 @@ Declarator = NEW {: return new Symbol(DeclFlags.NONE); :}
 		   | DECL {: return new Symbol(DeclFlags.NONE); :}
 ;
 
+GlobalVariable = Modifiers.m GlobalVarDecl.d
+               {:
+                    // Add modifier flags to declaration
+                    Declaration decl = ((VarDecl)d).getVar();
+                    decl.setFlags( decl.getFlags() | m );
+                    return _symbol_d;
+               :}
+               | Declarator GlobalVarDecl.d
+;
+
+GlobalVarDecl = Declaration.decl GlobalInit.init? 
+            {: 
+                return new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>());
+            :}
+            | GlobalVarDecl.prev COMMA Declaration.decl GlobalInit.init?
+            {:
+                decl.setFlags( (decl.getFlags() | DeclFlags.INLINE) & ~DeclFlags.NEW );
+                VarDecl d = new VarDecl(decl, init!=null?new Opt<Expression>(init):new Opt<Expression>(), new Opt<VarDecl>());
+                VarDecl next = prev;
+                while(next.hasNext())
+                    next = next.getNext();
+                next.setNext(d);
+                return _symbol_prev;
+            :}
+;
+
+GlobalInit = ASSIGN LBRACE StructInitializer.s COMMA? RBRACE {: return new StructInitializer(s); :}
+           | ASSIGN Expression.e
+;
+
+// Special case for struct initializers in global scope
+// public Plugin:myinfo = { name = "some", author = "me" };
+StructInitializer = Identifier.id ASSIGN Expression.e
+                  {:
+                    List<StructElement> l = new List<>();
+                    l.add(new StructElement(id, e));
+                    return new Symbol(l);
+                  :}
+                  | StructInitializer.s COMMA Identifier.id ASSIGN Expression.e
+                  {:
+                    s.add(new StructElement(id, e));
+                    return _symbol_s;
+                  :}
+;
+
+// Local variables
 LocalVariable = Modifiers.m LocalVarDecl.d 
 			  {:
 			  		// Add modifier flags to declaration
@@ -300,7 +349,7 @@ ForwardDecl = FORWARD Label.label? Identifier.name LPAREN Arguments.args? RPAREN
 			:}
 ;
 
-Global = LocalVariable.v Term
+Global = GlobalVariable.v Term?
 	   | NativeDecl.n Term
 	   | ForwardDecl.f Term
 	   | Method
@@ -596,29 +645,16 @@ Primitive = FLOATLIT.f {: return new SPFloat(f); :}
 		  | Boolean
 		  | STRINGLIT.s {: return new SPString(s); :}
 		  | CHARLIT.s {: return new SPString(s); :}
-		  | LBRACE CompoundLiteral
+		  | CompoundLiteral
 ;
 Boolean = TRUE {: return new True(); :}
 		| FALSE {: return new False(); :}
 ;
 
-CompoundLiteral = StructInitializer.s COMMA? RBRACE {: return new StructInitializer(s); :}
-				| ELLIPSES RBRACE {: return new ArrayLiteral(new List(), true); :}
-				| RBRACE {: return new ArrayLiteral(new List(), true); :}
-				| ExpressionList.l COMMA ELLIPSES.e RBRACE {: return new ArrayLiteral(l, true); :}
-				| ExpressionList.l RBRACE {: return new ArrayLiteral(l, false); :}
-;
-StructInitializer = Identifier.id ASSIGN Expression.e
-				  {:
-				  	List<StructElement> l = new List<>();
-				  	l.add(new StructElement(id, e));
-				  	return new Symbol(l);
-				  :}
-				  | StructInitializer.s COMMA Identifier.id ASSIGN Expression.e
-				  {:
-				  	s.add(new StructElement(id, e));
-				  	return _symbol_s;
-				  :}
+CompoundLiteral = LBRACE ELLIPSES RBRACE {: return new ArrayLiteral(new List(), true); :}
+				//| LBRACE RBRACE {: return new ArrayLiteral(new List(), false); :}
+				| LBRACE ExpressionList.l COMMA ELLIPSES.e RBRACE {: return new ArrayLiteral(l, true); :}
+				| LBRACE ExpressionList.l RBRACE {: return new ArrayLiteral(l, false); :}
 ;
 
 Identifier = IDENTIFIER.id {: return new Identifier(id); :};
