@@ -84,9 +84,11 @@ aspect PrettyPrint {
   }
   
   public void ExpressionStatement.print() {
-  	printer().append(indent());
+    if (!(getParent() instanceof List && getParent().getParent() instanceof ForLoop))
+  	  printer().append(indent());
   	getExpr().print();
-  	printer().append(";");
+  	if (!(getParent() instanceof List && getParent() instanceof ForLoop))
+  	  printer().append(";");
   }
 
   public void VarDecl.print() {
@@ -198,8 +200,13 @@ aspect PrettyPrint {
   	if(hasCondition())
   		getCondition().print();
   	printer().append("; ");
-  	if(hasStep())
-  		getStep().print();
+  	boolean addComma = false;
+  	for(Statement step: getStepsList()) {
+  	    if (addComma)
+            printer().append(", ");
+  		step.print();
+  		addComma = true;
+  	}
   	printer().append(")");
   	getBody().print();
   }

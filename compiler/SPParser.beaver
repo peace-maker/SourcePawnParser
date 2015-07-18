@@ -81,6 +81,7 @@ package spbeaver;
 %typeof DefaultCase = "Statement";
 %typeof For = "Statement";
 %typeof ForInit = "Statement";
+%typeof ForStep = "List<Statement>";
 %typeof Return = "Statement";
 %typeof If = "Statement";
 
@@ -456,11 +457,10 @@ DefaultCase = DEFAULT COLON StmtNoLocals.s
 			:}
 ;
 
-// TODO: allow multiple step expression statements seperated by COMMA
-For = FOR LPAREN ForInit.init? SEMICOLON Expression.cond? SEMICOLON ExprStmt.step? RPAREN StmtNoLocals.body
+For = FOR LPAREN ForInit.init? SEMICOLON Expression.cond? SEMICOLON ForStep.step? RPAREN StmtNoLocals.body
 	{: return new ForLoop(init==null?new Opt<Statement>():new Opt<Statement>(init), 
 						  cond==null?new Opt<Expression>():new Opt<Expression>(cond), 
-						  step==null?new Opt<Statement>():new Opt<Statement>(step), 
+						  step==null?new List<Statement>():step, 
 						  body); 
 	:}
 ;
@@ -470,7 +470,21 @@ ForInit = Declarator LocalVarDecl.d
 	  		decl.setFlags( decl.getFlags() | DeclFlags.INLINE );
 	  		return _symbol_d;
 		:}
-		| ExprStmt;
+		| ExprStmt
+;
+
+ForStep = ExprStmt.s
+        {:
+            List<Statement> l = new List<Statement>();
+            l.add(s);
+            return new Symbol(l);
+        :}
+        | ForStep.l COMMA ExprStmt.s
+        {:
+            l.add(s);
+            return _symbol_l;           
+        :}
+;
 
 Return = RETURN Expression.e? {: return new Return(e==null?new Opt<Expression>():new Opt<Expression>(e)); :};
 

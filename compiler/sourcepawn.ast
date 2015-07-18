@@ -18,7 +18,7 @@ DoWhile:While;
 Switch:Statement ::= Expr:Expression Cases:SwitchCase* [Default:Statement];
 SwitchCase:Statement ::= Expr:Expression* Body:Statement;
 
-ForLoop:Statement ::= [Init:Statement] [Condition:Expression] [Step:Statement] Body:Statement;
+ForLoop:Statement ::= [Init:Statement] [Condition:Expression] Steps:Statement* Body:Statement;
 
 Return:Statement ::= [Expr:Expression];
 If:Statement ::= Condition:Expression TrueBranch:Statement [FalseBranch:Statement];
