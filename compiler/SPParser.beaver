@@ -6,6 +6,33 @@ package spbeaver;
 %import "spbeaver.BinaryOperator.BinaryOp";
 %import "spbeaver.DeclFlags";
 %import "java.util.HashMap";
+%import "java.io.IOException";
+
+%embed
+{:
+    /** Parsing events notification "gateway" */
+    protected Events report = new SPEvents();
+    
+    /**
+     * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token
+     * or replacing the latter with one of the expected (if possible). If simple methods have not worked
+     * out, tries to do error phrase recovery.
+     * 
+     * It is expected that normally descendand parsers do not need to alter this method. In same cases though
+     * they may want to override it if they need a different error recovery strategy. 
+     * 
+     * @param token a lookahead terminal symbol that messed parsing 
+     * @param in token stream
+     * @throws IOException propagated from a scanner if it has issues with the source
+     * @throws Parser.Exception if Parser cannot recover
+     */
+    protected void recoverFromError(Symbol token, TokenStream in) throws IOException, Parser.Exception
+    {
+        // TODO: Try to recover from errors by skipping to the next ; or end-of-line
+        
+        super.recoverFromError(token, in);
+    }
+:};
 
 %terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL;
 %terminals LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, SEMICOLON, COMMA;//, DOT;
