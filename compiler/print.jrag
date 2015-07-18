@@ -343,7 +343,7 @@ aspect PrettyPrint {
   }
   
   public void UnsafeCast.print() {
-  	printer().append(getLabel());
+  	getLabel().print();
   	getExpr().print();
   }
   

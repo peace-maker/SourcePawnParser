@@ -59,7 +59,7 @@ package spbeaver;
 %typeof LocalVarDecl = "VarDecl";
 %typeof Declaration = "Declaration";
 %typeof OldDeclVar = "Declaration";
-%typeof OldArrayDim = "List";
+%typeof OldArrayDim = "List<Expression>";
 %typeof Init = "Expression";
 
 %typeof Modifiers = "Integer";
@@ -274,12 +274,14 @@ Init = ASSIGN Expression.e // Initialization
 
 Declaration = OldDeclVar;
 
-OldDeclVar = Label.label? Identifier.name OldArrayDim.dims?
-			{: return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NEW); :}
+OldDeclVar = Label.label Identifier.name OldArrayDim.dims?
+		   {: return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
+		   | Identifier.name OldArrayDim.dims?
+		   {: return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
 ;
 
 OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
-			{: List l = new List();
+			{: List<Expression> l = new List<Expression>();
 			   	l.add(e==null?new EmptyExpression():e);
 			   	return l;
 			:}
@@ -291,26 +293,46 @@ OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 ;
 
 // Functions
-OldDeclArg = Label.label? ELLIPSES // Variadic
+OldDeclArg = Label.label ELLIPSES // Variadic
 		   {:
-		   		return new Declaration(new Opt<Identifier>(), label==null?new Opt<Label>():new Opt<Label>(label), new List(), DeclFlags.VARIADIC);
+		   		return new Declaration(new Opt<Identifier>(), new Opt<Label>(label), new List(), DeclFlags.VARIADIC);
 		   :}
-		   | CONST AMPERSAND Label.label? Identifier.name OldArrayDim.dims?
+		   | ELLIPSES // Variadic
+           {:
+                return new Declaration(new Opt<Identifier>(), new Opt<Label>(), new List(), DeclFlags.VARIADIC);
+           :}
+		   | CONST AMPERSAND Label.label Identifier.name OldArrayDim.dims?
+           {:
+                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
+           :}
+		   | CONST AMPERSAND Identifier.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
+		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
 		   :}
-		   | CONST Label.label? Identifier.name OldArrayDim.dims?
+		   | CONST Label.label Identifier.name OldArrayDim.dims?
+           {:
+                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.CONST);
+           :}
+		   | CONST Identifier.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.CONST);
+		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.CONST);
 		   :}
-		   | AMPERSAND Label.label? Identifier.name OldArrayDim.dims?
+		   | AMPERSAND Label.label Identifier.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE);
+		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE);
 		   :}
-		   | Label.label? Identifier.name OldArrayDim.dims?
+		   | AMPERSAND Identifier.name OldArrayDim.dims?
+           {:
+                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE);
+           :}
+		   | Label.label Identifier.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), label==null?new Opt<Label>():new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NONE);
+		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NONE);
 		   :}
+		   | Identifier.name OldArrayDim.dims?
+           {:
+                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.NONE);
+           :}
 ;
 
 Arguments = OldDeclArg.decl Init.init?
@@ -330,23 +352,42 @@ Arguments = OldDeclArg.decl Init.init?
 
 MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced blocks.
 
-// FIXME: Make modifiers and label optional
-Method = Modifiers.mod Label.label? Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
-		{:
-			return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), mod==null?DeclFlags.NONE:mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
-		:}
+Method = Modifiers.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   {:
+	   		return new Method(name, new Opt<Label>(label), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   :}
+	   | Modifiers.mod Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   {:
+	   		return new Method(name, new Opt<Label>(), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   :}
+	   | Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   {:
+	   		return new Method(name, new Opt<Label>(label), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   :}
+	   | Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   {:
+	   		return new Method(name, new Opt<Label>(), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   :}
 ;
 
 
-NativeDecl = NATIVE Label.label? Identifier.name LPAREN Arguments.args? RPAREN
+NativeDecl = NATIVE Identifier.name LPAREN Arguments.args? RPAREN
 		  {:
-		  		return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+		  		return new Method(name, new Opt<Label>(), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+		  :}
+		  | NATIVE Label.label Identifier.name LPAREN Arguments.args? RPAREN
+		  {:
+		  		return new Method(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
 ;
 
-ForwardDecl = FORWARD Label.label? Identifier.name LPAREN Arguments.args? RPAREN
+ForwardDecl = FORWARD Identifier.name LPAREN Arguments.args? RPAREN
 			{:
-				return new Method(name, label==null?new Opt<Label>():new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
+				return new Method(name, new Opt<Label>(), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
+			:}
+			| FORWARD Label.label Identifier.name LPAREN Arguments.args? RPAREN
+			{:
+				return new Method(name, new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
 			:}
 ;
 
@@ -615,7 +656,7 @@ Unary = INC Unary.u {: return new IncDec(UnaryOp.INC, u, false); :} // Increment
 	  | BANG Unary.u {: return new UnaryExpr(UnaryOp.INV, u); :}    // Invert
 	  | TILDE Unary.u {: return new UnaryExpr(UnaryOp.COMPL, u); :}// Complement
 	  | SIZEOF SizeOf.s        // sizeof expression
-	  //| Label.l Unary.u {: return new UnsafeCast(l, u); :}// unsafe cast
+	  | Label.l Unary.u @ LABEL {: return new UnsafeCast(l, u); :}// unsafe cast
 	  | Postfix
 ;
 

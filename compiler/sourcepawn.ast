@@ -39,7 +39,7 @@ abstract Unary:Expression;
 UnaryExpr:Expression ::= <Operator:spbeaver.UnaryOperator.UnaryOp> Expr:Expression;
 IncDec:UnaryExpr ::= <Postfix:boolean>;
 SizeOf:Unary ::= Name:Identifier <Level:int>;
-UnsafeCast:Unary ::= <Label:String> Expr:Expression;
+UnsafeCast:Unary ::= Label Expr:Expression;
 
 abstract Primary:Expression;
 // FIXME: MethodName doesn't have to be a Prefix. Only Identifier allowed?
