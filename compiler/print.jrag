@@ -26,8 +26,14 @@ aspect PrettyPrint {
    		   return "";
       String indent = getParent().extractIndent();
       
-      if(getParent().addsIndentationLevel() && this instanceof Block)
+      // Don't indent blocks. Just the contents of blocks.
+      if(this instanceof Block)
       	return indent;
+      
+      // Don't indent else if() {..} blocks.
+      if(this instanceof Opt && getParent() instanceof If
+      || getParent() instanceof Opt && getParent().getParent() instanceof If)
+        return indent;
       
       if(getParent().addsIndentationLevel())
       	indent += PrettyPrinter.INDENT;
@@ -207,7 +213,10 @@ aspect PrettyPrint {
   }
   
   public void If.print() {
-  	printer().append(indent());
+    if(getParent() instanceof Opt && getParent().getParent() instanceof If)
+        printer().append(" ");
+    else
+  	    printer().append(indent());
   	printer().append("if (");
   	getCondition().print();
   	printer().append(")");
