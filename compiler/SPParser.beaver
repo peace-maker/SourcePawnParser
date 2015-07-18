@@ -182,8 +182,9 @@ StatementList = Statement.s
 			  :}
 ;
 
-// TODO: Allow empty blocks
-Block = LBRACE StatementList.l? RBRACE {: return new Block(l); :};
+Block = LBRACE RBRACE {: return new Block(new List<Statement>()); :}
+	  | LBRACE StatementList.l RBRACE {: return new Block(l); :}
+;
 
 ExprStmt = Assignment.a {: return new ExpressionStatement(a); :}; // TODO: Why no Expression
 
@@ -443,8 +444,10 @@ If = IF LPAREN Expression.cond RPAREN StmtNoLocals.trueBranch
    :}
 ;
 
-Enum = ENUM Identifier.name? LBRACE EnumConstant.constants? COMMA? RBRACE
-	{: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
+Enum = ENUM Identifier.name? LBRACE RBRACE
+	 {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), new List<EnumConstant>()); :}
+	 | ENUM Identifier.name? LBRACE EnumConstant.constants COMMA? RBRACE
+	 {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
 ;
 
 EnumConstant = Declaration.decl Init.init?
