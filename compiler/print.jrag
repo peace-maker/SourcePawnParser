@@ -100,12 +100,15 @@ aspect PrettyPrint {
   	
   	if ((getVar().getFlags() & DeclFlags.STATIC) > 0)
   		printer().append("static ");
+    if ((getVar().getFlags() & DeclFlags.PUBLIC) > 0)
+        printer().append("public ");
   	// TODO: handle |static stock|
-  	else if ((getVar().getFlags() & DeclFlags.STOCK) > 0)
+  	if ((getVar().getFlags() & DeclFlags.STOCK) > 0)
   		printer().append("stock ");
-  	else if ((getVar().getFlags() & DeclFlags.CONST) > 0)
+  	if ((getVar().getFlags() & DeclFlags.CONST) > 0)
   		printer().append("const ");
-  	else if ((getVar().getFlags() & DeclFlags.NEW) > 0)
+      
+  	if ((getVar().getFlags() & DeclFlags.NEW) > 0 && (getVar().getFlags() & (DeclFlags.STATIC|DeclFlags.PUBLIC|DeclFlags.CONST)) == 0)
   		printer().append("new ");
   	
 	getVar().print();

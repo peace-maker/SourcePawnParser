@@ -90,6 +90,7 @@ package spbeaver;
 %typeof Init = "Expression";
 
 %typeof Modifiers = "Integer";
+%typeof ModifiersList = "Integer";
 %typeof Declarator = "Integer";
 %typeof OldDeclArg = "Declaration";
 %typeof Arguments = "List<VarDecl>";
@@ -226,12 +227,18 @@ Modifiers = STATIC {: return new Symbol(DeclFlags.STATIC); :}
 		  | PUBLIC {: return new Symbol(DeclFlags.PUBLIC); :}
 		  | STOCK {: return new Symbol(DeclFlags.STOCK); :}
 ;
+ModifiersList = Modifiers.mod
+              | ModifiersList.l Modifiers.mod
+              {:
+                return new Symbol(l | mod);
+              :}
+;
 
 Declarator = NEW {: return new Symbol(DeclFlags.NONE); :}
 		   | DECL {: return new Symbol(DeclFlags.NONE); :}
 ;
 
-GlobalVariable = Modifiers.m GlobalVarDecl.d
+GlobalVariable = ModifiersList.m GlobalVarDecl.d
                {:
                     // Add modifier flags to declaration
                     Declaration decl = ((VarDecl)d).getVar();
@@ -277,7 +284,7 @@ StructInitializer = Identifier.id ASSIGN Expression.e
 ;
 
 // Local variables
-LocalVariable = Modifiers.m LocalVarDecl.d 
+LocalVariable = ModifiersList.m LocalVarDecl.d 
 			  {:
 			  		// Add modifier flags to declaration
 			  		Declaration decl = ((VarDecl)d).getVar();
@@ -385,11 +392,11 @@ Arguments = OldDeclArg.decl Init.init?
 
 MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced blocks.
 
-Method = Modifiers.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+Method = ModifiersList.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return new Method(name, new Opt<Label>(label), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
-	   | Modifiers.mod Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   | ModifiersList.mod Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return new Method(name, new Opt<Label>(), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
@@ -484,7 +491,7 @@ StructElements = Declaration.decl
                     l.add(decl);
                     return new Symbol(l);
                :}
-               | Modifiers.m Declaration.decl
+               | ModifiersList.m Declaration.decl
                {:
                     List<Declaration> l = new List<Declaration>();
                     decl.setFlags( decl.getFlags() | m );
@@ -496,7 +503,7 @@ StructElements = Declaration.decl
                     l.add(decl);
                     return _symbol_l;
                :}
-               | StructElements.l COMMA Modifiers.m Declaration.decl
+               | StructElements.l COMMA ModifiersList.m Declaration.decl
                {:
                     decl.setFlags( decl.getFlags() | m );
                     l.add(decl);
