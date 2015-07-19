@@ -50,6 +50,7 @@ aspect PrettyPrint {
   eq While.addsIndentationLevel() = true;
   eq DoWhile.addsIndentationLevel() = true;
   eq ForLoop.addsIndentationLevel() = true;
+  eq FuncEnum.addsIndentationLevel() = true;
   //eq Method.addsIndentationLevel() = true;
 
   syn lazy PrettyPrinter SourcePawnFile.printer() {
@@ -310,6 +311,35 @@ aspect PrettyPrint {
   		getBody().print();
   	else
   		printer().append(";");
+  }
+  
+  public void FuncEnum.print() {
+    printer().append(indent());
+    printer().append("funcenum ");
+    getName().print();
+    printer().append(indent() + "{");
+    boolean addComma = false;
+    for(FuncEnumElement elem: getMethodsList()) {
+        if (addComma)
+            printer().append(", ");
+        elem.print();
+        addComma = true;
+    }
+    printer().append(indent() + "};");
+  }
+  public void FuncEnumElement.print() {
+    printer().append(indent());
+    if (hasLabel())
+        getLabel().print();
+    printer().append("public(");
+    boolean addComma = false;
+    for(VarDecl decl: getArgsList()) {
+        if (addComma)
+            printer().append(", ");
+        decl.print();
+        addComma = true;
+    }
+    printer().append(")");
   }
   
   abstract void Expression.print();

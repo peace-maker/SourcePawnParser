@@ -13,6 +13,9 @@ VarDecl:Statement ::= Var:Declaration [Init:Expression] [Next:VarDecl];
 
 Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement];
 
+FuncEnum:Statement ::= Name:Identifier Methods:FuncEnumElement*;
+FuncEnumElement:Statement ::= [Label:Label] Args:VarDecl*;
+
 While:Statement ::= Condition:Expression Body:Statement;
 DoWhile:While;
 Switch:Statement ::= Expr:Expression Cases:SwitchCase* [Default:Statement];

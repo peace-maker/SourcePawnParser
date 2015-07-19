@@ -44,7 +44,7 @@ package spbeaver;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
-%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCTAG;
+%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG;
 %terminals IF, NATIVE, NEW, PUBLIC, RETURN, SIZEOF;
 %terminals STOCK, SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
@@ -98,6 +98,8 @@ package spbeaver;
 %typeof NativeDecl = "Statement";
 %typeof ForwardDecl = "Statement";
 %typeof FunctagDecl = "Statement";
+%typeof FuncenumDecl = "Statement";
+%typeof FuncenumMethodList = "List<FuncEnumElement>";
 %typeof Global = "Statement";
 
 %typeof Block = "Statement";
@@ -439,10 +441,41 @@ FunctagDecl = FUNCTAG PUBLIC Identifier.name LPAREN Arguments.args? RPAREN
             :}
 ;
 
+FuncenumDecl = FUNCENUM Identifier.name LBRACE FuncenumMethodList.methods COMMA? RBRACE
+             {:
+                return new FuncEnum(name, methods);
+             :}
+;
+
+FuncenumMethodList = PUBLIC LPAREN Arguments.args? RPAREN
+                   {:
+                        List<FuncEnumElement> l = new List<FuncEnumElement>();
+                        l.add(new FuncEnumElement(new Opt<Label>(), args==null?new List<VarDecl>():args));
+                        return new Symbol(l);
+                   :}
+                   | Label.label PUBLIC LPAREN Arguments.args? RPAREN
+                   {:
+                        List<FuncEnumElement> l = new List<FuncEnumElement>();
+                        l.add(new FuncEnumElement(new Opt<Label>(label), args==null?new List<VarDecl>():args));
+                        return new Symbol(l);
+                   :}
+                   | FuncenumMethodList.l COMMA PUBLIC LPAREN Arguments.args? RPAREN
+                   {:
+                        l.add(new FuncEnumElement(new Opt<Label>(), args==null?new List<VarDecl>():args));
+                        return _symbol_l;
+                   :}
+                   | FuncenumMethodList.l COMMA Label.label PUBLIC LPAREN Arguments.args? RPAREN
+                   {:
+                        l.add(new FuncEnumElement(new Opt<Label>(label), args==null?new List<VarDecl>():args));
+                        return _symbol_l;
+                   :}
+;
+
 Global = GlobalVariable.v Term?
 	   | NativeDecl.n Term
 	   | ForwardDecl.f Term
 	   | FunctagDecl.f Term
+	   | FuncenumDecl.e Term
 	   | Method
 	   | Enum.enum Term
 ;
