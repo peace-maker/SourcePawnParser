@@ -51,6 +51,7 @@ aspect PrettyPrint {
   eq DoWhile.addsIndentationLevel() = true;
   eq ForLoop.addsIndentationLevel() = true;
   eq FuncEnum.addsIndentationLevel() = true;
+  eq StructStatement.addsIndentationLevel() = true;
   //eq Method.addsIndentationLevel() = true;
 
   syn lazy PrettyPrinter SourcePawnFile.printer() {
@@ -276,6 +277,26 @@ aspect PrettyPrint {
   		printer().append(" = ");
   		getInit().print();
   	}
+  }
+  
+  public void StructStatement.print() {
+    printer().append(indent());
+    printer().append("struct ");
+    getName().print();
+    printer().append(indent() + "{");
+    boolean addComma = false;
+    for(Declaration decl: getFieldsList()) {
+        if (addComma)
+            printer().append(",");
+        
+        printer().append(indent() + PrettyPrinter.INDENT);
+        
+        if ((decl.getFlags() & DeclFlags.CONST) > 0)
+            printer().append("const ");
+        decl.print();
+        addComma = true;
+    }
+    printer().append(indent() + "};");
   }
   
   public void Method.print() {

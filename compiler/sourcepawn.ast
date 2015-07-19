@@ -31,6 +31,8 @@ Block:Statement ::= Statements:Statement*;
 EnumStatement:Statement ::= [Name:Identifier] Constants:EnumConstant*;
 EnumConstant:Statement ::= Decl:Declaration [Init:Expression];
 
+StructStatement:Statement ::= Name:Identifier Fields:Declaration*;
+
 abstract Expression;
 EmptyExpression:Expression;
 

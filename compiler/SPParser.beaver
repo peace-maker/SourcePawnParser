@@ -46,7 +46,7 @@ package spbeaver;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
 %terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG;
 %terminals IF, NATIVE, NEW, PUBLIC, RETURN, SIZEOF;
-%terminals STOCK, SWITCH, STATIC, TRUE, WHILE;
+%terminals STOCK, STRUCT, SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
 //%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG, FUNCTION;
 //%terminals GOTO, IF, NATIVE, NEW, OPERATOR, PUBLIC, RETURN, SIZEOF;
@@ -100,6 +100,8 @@ package spbeaver;
 %typeof FunctagDecl = "Statement";
 %typeof FuncenumDecl = "Statement";
 %typeof FuncenumMethodList = "List<FuncEnumElement>";
+%typeof StructDecl = "Statement";
+%typeof StructElements = "List<Declaration>";
 %typeof Global = "Statement";
 
 %typeof Block = "Statement";
@@ -471,12 +473,63 @@ FuncenumMethodList = PUBLIC LPAREN Arguments.args? RPAREN
                    :}
 ;
 
+StructDecl = STRUCT Identifier.name LBRACE StructElements.elements COMMA? RBRACE
+          {:
+                return new StructStatement(name, elements);
+          :}
+;
+StructElements = Declaration.decl
+               {:
+                    List<Declaration> l = new List<Declaration>();
+                    l.add(decl);
+                    return new Symbol(l);
+               :}
+               | Modifiers.m Declaration.decl
+               {:
+                    List<Declaration> l = new List<Declaration>();
+                    decl.setFlags( decl.getFlags() | m );
+                    l.add(decl);
+                    return new Symbol(l);
+               :}
+               | StructElements.l COMMA Declaration.decl
+               {:
+                    l.add(decl);
+                    return _symbol_l;
+               :}
+               | StructElements.l COMMA Modifiers.m Declaration.decl
+               {:
+                    decl.setFlags( decl.getFlags() | m );
+                    l.add(decl);
+                    return _symbol_l;
+               :}
+;
+
+Enum = ENUM Identifier.name? LBRACE RBRACE
+     {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), new List<EnumConstant>()); :}
+     | ENUM Identifier.name? LBRACE EnumConstant.constants COMMA? RBRACE
+     {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
+;
+
+EnumConstant = Declaration.decl Init.init?
+            {:
+                List<EnumConstant> l = new List<>();
+                l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
+                return new Symbol(l);
+            :}
+            | EnumConstant.l COMMA Declaration.decl Init.init?
+            {:
+                l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
+                return _symbol_l;
+            :}
+;
+
 Global = GlobalVariable.v Term?
 	   | NativeDecl.n Term
 	   | ForwardDecl.f Term
 	   | FunctagDecl.f Term
 	   | FuncenumDecl.e Term
 	   | Method
+	   | StructDecl.struct Term
 	   | Enum.enum Term
 ;
 
@@ -578,25 +631,6 @@ If = IF LPAREN Expression.cond RPAREN StmtNoLocals.trueBranch
    		((If) outer).setFalseBranch(falseBranch);
    		return _symbol_outer;
    :}
-;
-
-Enum = ENUM Identifier.name? LBRACE RBRACE
-	 {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), new List<EnumConstant>()); :}
-	 | ENUM Identifier.name? LBRACE EnumConstant.constants COMMA? RBRACE
-	 {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
-;
-
-EnumConstant = Declaration.decl Init.init?
-			{:
-				List<EnumConstant> l = new List<>();
-				l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
-				return new Symbol(l);
-			:}
-			| EnumConstant.l COMMA Declaration.decl Init.init?
-			{:
-				l.add(new EnumConstant(decl, init==null?new Opt<Expression>():new Opt<Expression>(init)));
-				return _symbol_l;
-			:}
 ;
 
 

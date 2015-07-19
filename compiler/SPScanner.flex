@@ -138,7 +138,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 "return" { return sym(Terminals.RETURN); }
 "sizeof" { return sym(Terminals.SIZEOF); }
 "stock" { return sym(Terminals.STOCK); }
-//"struct" { return sym(Terminals.STRUCT); }
+"struct" { return sym(Terminals.STRUCT); }
 "switch" { return sym(Terminals.SWITCH); }
 //"tagof" { return sym(Terminals.TAGOF); }
 "static" { return sym(Terminals.STATIC); }
