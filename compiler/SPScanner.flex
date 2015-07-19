@@ -127,7 +127,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 "for" { return sym(Terminals.FOR); }
 "forward" { return sym(Terminals.FORWARD); }
 //"funcenum" { return sym(Terminals.FUNCENUM); }
-//"functag" { return sym(Terminals.FUNCTAG); }
+"functag" { return sym(Terminals.FUNCTAG); }
 //"function" { return sym(Terminals.FUNCTION); }
 //"goto" { return sym(Terminals.GOTO); }
 "if" { return sym(Terminals.IF); }

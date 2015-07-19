@@ -44,7 +44,7 @@ package spbeaver;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
-%terminals ELSE, ENUM, FALSE, FOR, FORWARD;
+%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCTAG;
 %terminals IF, NATIVE, NEW, PUBLIC, RETURN, SIZEOF;
 %terminals STOCK, SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
@@ -97,6 +97,7 @@ package spbeaver;
 %typeof Method = "Statement";
 %typeof NativeDecl = "Statement";
 %typeof ForwardDecl = "Statement";
+%typeof FunctagDecl = "Statement";
 %typeof Global = "Statement";
 
 %typeof Block = "Statement";
@@ -419,9 +420,29 @@ ForwardDecl = FORWARD Identifier.name LPAREN Arguments.args? RPAREN
 			:}
 ;
 
+FunctagDecl = FUNCTAG PUBLIC Identifier.name LPAREN Arguments.args? RPAREN
+            {:
+                return new Method(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+            :}
+            | FUNCTAG PUBLIC Label.label Identifier.name LPAREN Arguments.args? RPAREN
+            {:
+                return new Method(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+            :}
+            // Syntax is mixed up in some includes ...
+            | FUNCTAG Identifier.name PUBLIC LPAREN Arguments.args? RPAREN
+            {:
+                return new Method(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+            :}
+            | FUNCTAG Identifier.name Label.label PUBLIC LPAREN Arguments.args? RPAREN
+            {:
+                return new Method(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+            :}
+;
+
 Global = GlobalVariable.v Term?
 	   | NativeDecl.n Term
 	   | ForwardDecl.f Term
+	   | FunctagDecl.f Term
 	   | Method
 	   | Enum.enum Term
 ;

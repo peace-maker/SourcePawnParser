@@ -283,6 +283,8 @@ aspect PrettyPrint {
   		printer().append("native ");
   	if ((getFlags() & DeclFlags.FORWARD) > 0)
   		printer().append("forward ");
+    if ((getFlags() & DeclFlags.FUNCTAG) > 0)
+        printer().append("functag ");
   	if ((getFlags() & DeclFlags.PUBLIC) > 0)
   		printer().append("public ");
   	if ((getFlags() & DeclFlags.STATIC) > 0)
