@@ -1,0 +1,50 @@
+%header {:
+package spbeaver.preprocessor;
+:};
+
+//%terminals IF, ELSE, ENDIF, DEFINED;
+%terminals INCLUDE, DEFINE, ENDINPUT;
+%terminals LT, GT;
+%terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, TRUE, FALSE, LITERAL;
+
+%typeof Goal = "Preprocessor";
+%typeof Define = "Statement";
+%typeof EndInput = "Statement";
+%typeof Include = "Statement";
+%typeof Primitive = "Expression";
+%typeof Identifier = "Identifier";
+
+%typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LITERAL = "String";
+
+%goal Goal;
+
+Goal = Define
+     | EndInput
+     | Include;
+
+EndInput = ENDINPUT {: return new EndInput(); :};
+
+Include = INCLUDE STRINGLIT.file {: return new Include(file, 1); :}
+        | INCLUDE LT LITERAL.file GT {: return new Include(file, 2); :}
+;
+
+Define = DEFINE Identifier.id
+       {:
+            return new Define(id, new Opt<Expression>());
+       :}
+       | DEFINE Identifier.id Primitive.value
+       {:
+            return new Define(id, new Opt<Expression>(value));
+       :}
+;
+
+Primitive = FLOATLIT.f {: return new SPFloat(f); :}
+          | INTEGERLIT.i {: return new SPInteger(i); :}
+          | TRUE {: return new True(); :}
+          | FALSE {: return new False(); :}
+          | STRINGLIT.s {: return new SPString(s); :}
+          | CHARLIT.s {: return new SPString(s); :}
+          | Identifier
+;
+
+Identifier = IDENTIFIER.id {: return new Identifier(id); :};

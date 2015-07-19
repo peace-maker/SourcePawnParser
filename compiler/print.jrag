@@ -75,6 +75,10 @@ aspect PrettyPrint {
   public void EmptyStatement.print() {
   }
   
+  public void PreprocessorLine.print() {
+    printer().append(getLine());
+  }
+  
   public void Break.print() {
   	printer().append(indent());
   	printer().append("break;");

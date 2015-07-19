@@ -8,6 +8,11 @@ package spbeaver;
 %import "java.util.HashMap";
 %import "java.util.LinkedList";
 %import "java.io.IOException";
+%import "spbeaver.preprocessor.SPPreprocessorScanner";
+%import "spbeaver.preprocessor.SPPreprocessorParser";
+%import "spbeaver.preprocessor.Preprocessor";
+%import "java.io.ByteArrayInputStream";
+%import "java.io.InputStreamReader";
 
 %embed
 {:
@@ -46,6 +51,12 @@ package spbeaver;
     /** List of errors encountered during parsing */
     public LinkedList<SPParser.Exception> parseErrors = new LinkedList<SPParser.Exception>();
     
+    /** Preprocessor parser instance */
+    public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
+    
+    /** List of preprocessor statements */
+    public LinkedList<Preprocessor> preprocessor = new LinkedList<Preprocessor>();
+    
     /**
      * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token
      * or replacing the latter with one of the expected (if possible). If simple methods have not worked
@@ -74,6 +85,8 @@ package spbeaver;
 %terminals ASSIGN_BITOR, ASSIGN_BITXOR, ASSIGN_SHR, ASSIGN_SHRU, ASSIGN_SHL;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR, INC, DEC;
 %terminals ELLIPSES;//, DOUBLEDOT, DOUBLECOLON;
+
+%terminals PREPROCESSOR;
 
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
@@ -106,6 +119,8 @@ package spbeaver;
 %left INC, DEC, BANG, TILDE;
 %left LABEL;
 %left IDENTIFIER;
+
+%typeof Preprocessor = "Statement";
 
 %typeof GlobalStatementList = "List<Statement>";
 %typeof Statement = "Statement";
@@ -197,10 +212,34 @@ package spbeaver;
 %typeof Identifier = "Identifier";
 %typeof Label = "Label";
 
-%typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL = "String";
+%typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL, PREPROCESSOR = "String";
 
 %typeof Goal = "SourcePawnFile";
 %goal Goal;
+
+// Delegate preprocessor lines to a seperate parser
+Preprocessor = PREPROCESSOR.pre
+             {:
+                // Skip the leading #
+                String preprocessInput = pre.substring(pre.indexOf('#')+1);
+                try
+                {
+                    // Try to parse the preprocessor line
+	                Preprocessor stmt = (Preprocessor) preprocessorParser.parse(new SPPreprocessorScanner(new InputStreamReader(new ByteArrayInputStream(preprocessInput.getBytes()))));
+	                // Remember it if it was sane.
+	                preprocessor.add(stmt);
+	                System.out.print(pre);
+	            }
+			    catch (beaver.Parser.Exception e) {
+			        System.err.println("Error when parsing preprocessor line: " + pre);      
+			        System.err.println(e.getMessage());      
+			    } catch (IOException e) {
+		            System.err.println("Error reading preprocessor line: " + e.getMessage());
+		        }
+                // Make the current parser happy.
+                return new PreprocessorLine(pre);
+             :}
+;
 
 Goal = GlobalStatementList.s {: return new SourcePawnFile(s); :}
 ;
@@ -234,6 +273,7 @@ StmtNoLocals = Block
 			 | CONTINUE Term {: return new Continue(); :}
 			 | Enum.enum Term
 			 | ExprStmt.exprstmt Term
+			 | Preprocessor
 ;
 
 StatementList = Statement.s
@@ -571,6 +611,7 @@ Global = GlobalVariable.v Term?
 	   | Method
 	   | StructDecl.struct Term
 	   | Enum.enum Term
+	   | Preprocessor
 ;
 
 // Statements

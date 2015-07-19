@@ -1,11 +1,12 @@
-<project name="spbeaver" default="compile" basedir=".">
+<project name="sppreprocesspr" default="compile" basedir=".">
 
-  <property name="parser.name" value="SPParser"/>
+  <property name="parser.name" value="SPPreprocessorParser"/>
 
-  <property name="package" value="spbeaver"/>
+  <property name="package" value="spbeaver.preprocessor"/>
+  <property name="package.dir" value="spbeaver/preprocessor"/>
 
   <property name="src.dir" value="src"/>
-  <property name="grammar.dir" value="compiler"/>
+  <property name="grammar.dir" value="preprocessor"/>
   <property name="gen.dir" value="${basedir}/gen"/>
   <property name="classes.dir" value="bin"/>
   <property name="tools"   value="tools"/>
@@ -15,15 +16,15 @@
   <taskdef name="jastadd" classname="org.jastadd.JastAddTask" classpath="${tools}/jastadd2.jar" />
 
   <target name="scanner">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <jflex file="${grammar.dir}/SPScanner.flex" outdir="${gen.dir}/${package}" nobak="true" />
+    <mkdir dir="${gen.dir}/${package.dir}"/>
+    <jflex file="${grammar.dir}/SPPreprocessorScanner.flex" outdir="${gen.dir}/${package.dir}" nobak="true" />
   </target>
 
   <target name="parser">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <beaver file="${grammar.dir}/SPParser.beaver" destdir="${gen.dir}/${package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+    <mkdir dir="${gen.dir}/${package.dir}"/>
+    <beaver file="${grammar.dir}/SPPreprocessorParser.beaver" destdir="${gen.dir}/${package.dir}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
   </target>
-
+	
   <target name="jastadd">
     <mkdir dir="${gen.dir}"/>
     <jastadd package="${package}" grammar="${grammar.dir}" outdir="${gen.dir}" beaver="true" debug="true">
@@ -57,28 +58,7 @@
   </target>
 
   <target name="clean">
-     <delete dir="${gen.dir}/${package}"/>
-  </target>
-
-  <!--<target name="test" depends="compile">
-    <java
-      classname="minijava.MJFrontEnd"
-      classpath="${classes.dir}:${tools}/junit.jar:${tools}/beaver-rt.jar"
-      fork="true"
-      dir=".">
-      <arg value="${target}"/>
-    </java>
-  </target>-->
-  
-  <target name="alltests" depends="compile">
-    <apply executable="java" parallel="false" force="true">
-      <arg value="-classpath" />
-      <arg path="${classes.dir}:${tools}/junit.jar:${tools}/beaver-rt.jar" />
-      <arg value="minijava.SPFrontEnd" />
-      <srcfile />
-        <fileset dir="tests/" includes="*.java"/>
-        <!--fileset dir="../sheets/ex5/tests/" includes="*.java" id="fid"/-->
-    </apply>
+     <delete dir="${gen.dir}/${package.dir}"/>
   </target>
   
 </project>

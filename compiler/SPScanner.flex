@@ -62,7 +62,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 {LineComment} { }
 {MultiComment} { }
 {WhiteSpace} { }
-{Preprocessor} { }
+{Preprocessor} { return sym(Terminals.PREPROCESSOR); }
 
 // Keywords
 "aquire" | // R

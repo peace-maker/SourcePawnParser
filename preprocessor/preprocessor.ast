@@ -1,0 +1,20 @@
+abstract Preprocessor;
+abstract Statement:Preprocessor;
+
+Define:Statement ::= Name:Identifier [Value:Expression];
+EndInput:Statement;
+Include:Statement ::= <File:String> <Flags:Integer>;
+
+abstract Expression;
+abstract Prefix:Expression;
+Identifier:Prefix ::= <ID:String>;
+
+// Primitives
+abstract SPBoolean:Primitive;
+abstract Primitive:Expression;
+True:SPBoolean;
+False:SPBoolean;
+SPFloat:Primitive ::= <Float:String>;
+SPInteger:Primitive ::= <Integer:String>;
+SPString:Primitive ::= <String:String>;
+SPCharacter:Primitive ::= <Char:String>;

@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import spbeaver.preprocessor.Preprocessor;
+
 class SPFrontEnd {
 
   public static void main(String args[]) {
@@ -25,6 +27,11 @@ class SPFrontEnd {
       if (!parser.parseErrors.isEmpty())
           System.exit(1);
 
+      System.out.printf("Parsed %d preprocessor directives\n", parser.preprocessor.size());
+      for (Preprocessor pre: parser.preprocessor) {
+          System.out.println(pre.printAST());
+      }
+      
     /*  Set<Error> typeErrors = ast.getTypeErrors();
       if (!typeErrors.isEmpty()) {
     	  System.out.println("There are " + typeErrors.size() + " type error(s) in "+ args[0]);

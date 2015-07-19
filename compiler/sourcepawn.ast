@@ -3,6 +3,7 @@ SourcePawnFile ::= Statements:Statement*;
 
 abstract Statement;
 EmptyStatement:Statement;
+PreprocessorLine:Statement ::= <Line:String>;
 
 Break:Statement;
 Continue:Statement;
