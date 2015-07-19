@@ -22,17 +22,9 @@ class SPFrontEnd {
       SPParser parser = new SPParser();
       // Start parsing from the nonterminal "Start".
       SourcePawnFile ast = (SourcePawnFile) parser.parse(new SPScanner(new FileReader(inputFileName)));
-      //System.out.println(ast.numChildren);
-//      SPScanner sc = new SPScanner(new FileReader(inputFileName));
-//      Symbol s;
-//      try {
-//		while((s = sc.nextToken()).getId() != Terminals.EOF) {
-//			  System.out.println(Terminals.NAMES[s.getId()] + ": " + s.value);
-//		  }
-//	} catch (Exception e) {
-//		// TODO Auto-generated catch block
-//		e.printStackTrace();
-//	}
+      if (!parser.parseErrors.isEmpty())
+          System.exit(1);
+
     /*  Set<Error> typeErrors = ast.getTypeErrors();
       if (!typeErrors.isEmpty()) {
     	  System.out.println("There are " + typeErrors.size() + " type error(s) in "+ args[0]);
@@ -43,7 +35,8 @@ class SPFrontEnd {
       }
       */
       // Print the resulting AST on standard output.
-      System.out.println(ast.print().getString()); 
+      System.out.println(ast.printAST()); 
+      System.out.println(ast.print().getString());
     }
     catch (FileNotFoundException e) {
       System.err.println("SPFrontEnd: file " + inputFileName + " not found");
@@ -53,7 +46,7 @@ class SPFrontEnd {
       System.out.println(e.getMessage());      
     }
     catch (IOException e) {
-      System.out.println("MJFrontEnd: " + e.getMessage());
+      System.out.println("SPFrontEnd: " + e.getMessage());
     }
   }
 

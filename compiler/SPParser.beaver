@@ -6,12 +6,45 @@ package spbeaver;
 %import "spbeaver.BinaryOperator.BinaryOp";
 %import "spbeaver.DeclFlags";
 %import "java.util.HashMap";
+%import "java.util.LinkedList";
 %import "java.io.IOException";
 
 %embed
 {:
+    // Own small exception class
+    static public class Exception extends java.lang.Exception
+    {
+        public final Symbol symbol;
+        public final int line;
+        public final int column;
+        Exception(String msg)
+        {
+            super(msg);
+            symbol = null;
+            line = 0;
+            column = 0;
+        }
+        Exception(String msg, Symbol symbol)
+        {
+            super(msg);
+            this.symbol = symbol;
+            line = 0;
+            column = 0;
+        }
+        Exception(String msg, int line, int column)
+        {
+            super(msg);
+            this.symbol = null;
+            this.line = line;
+            this.column = column;
+        }
+    }
+
     /** Parsing events notification "gateway" */
-    protected Events report = new SPEvents();
+    protected Events report = new SPEvents(this);
+    
+    /** List of errors encountered during parsing */
+    public LinkedList<SPParser.Exception> parseErrors = new LinkedList<SPParser.Exception>();
     
     /**
      * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token
