@@ -18,7 +18,7 @@ public abstract class Parser
 {
 	static public class Exception extends java.lang.Exception
 	{
-		Exception(String msg)
+		public Exception(String msg)
 		{
 			super(msg);
 		}
