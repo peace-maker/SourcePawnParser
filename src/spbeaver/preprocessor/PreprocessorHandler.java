@@ -52,6 +52,9 @@ public class PreprocessorHandler {
     }
 
     public void accept(Define def) throws Exception {
+        if (shouldSkip())
+            return;
+        
         if (defines.containsKey(def.getName()))
             throw new PreprocessorHandler.Exception("\"" + def.getName() + "\" is already defined."); // TODO: Tell location of already defined symbol
         
@@ -59,6 +62,9 @@ public class PreprocessorHandler {
     }
     
     public void accept(Undefine undef) throws Exception {
+        if (shouldSkip())
+            return;
+        
         if (!defines.containsKey(undef.getName().getID()))
             throw new PreprocessorHandler.Exception("\"" + undef.getName().getID() + "\" is not defined.");
         
@@ -67,6 +73,8 @@ public class PreprocessorHandler {
     
     // Simulate end of file in lexer!
     public void accept(EndInput end) throws Exception {
+        if (shouldSkip())
+            return;
         endInput = true;
     }
     
