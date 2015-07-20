@@ -22,6 +22,8 @@ public class PreprocessorHandler {
     
     private SPParser parser;
     private Stack<IfState> ifstack = new Stack<>();
+    // Set by the #endinput directive
+    private boolean endInput = false;
     
     private HashMap<String, Opt<Expression>> defines = new HashMap<>();
     
@@ -35,6 +37,14 @@ public class PreprocessorHandler {
     
     public boolean shouldSkip() {
         return !ifstack.isEmpty() && (ifstack.peek() == IfState.IGNORE || ifstack.peek() == IfState.SKIP);
+    }
+    
+    public boolean endInput() {
+        return endInput;
+    }
+    
+    public void clearEndInput() {
+        endInput = false;
     }
     
     public void add(Statement statement) throws Exception {
@@ -53,6 +63,11 @@ public class PreprocessorHandler {
             throw new PreprocessorHandler.Exception("\"" + undef.getName().getID() + "\" is not defined.");
         
         defines.remove(undef.getName());
+    }
+    
+    // Simulate end of file in lexer!
+    public void accept(EndInput end) throws Exception {
+        endInput = true;
     }
     
     public void accept(If expr) throws Exception {

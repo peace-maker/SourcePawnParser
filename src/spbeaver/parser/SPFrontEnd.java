@@ -22,8 +22,11 @@ class SPFrontEnd {
     }
    try {
       SPParser parser = new SPParser();
+      SPScanner scanner = new SPScanner(new FileReader(inputFileName));
+      // Link preprocessor class to lexer.
+      scanner.preprocessor = parser.preprocessor;
       // Start parsing from the nonterminal "Start".
-      SourcePawnFile ast = (SourcePawnFile) parser.parse(new SPScanner(new FileReader(inputFileName)));
+      SourcePawnFile ast = (SourcePawnFile) parser.parse(scanner);
       if (!parser.parseErrors.isEmpty())
           System.exit(1);
 

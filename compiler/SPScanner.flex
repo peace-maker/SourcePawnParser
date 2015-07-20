@@ -1,6 +1,7 @@
 package spbeaver.parser; // The generated parser will belong to this package 
 
 import spbeaver.parser.SPParser.Terminals; 
+import spbeaver.preprocessor.PreprocessorHandler;
 // The terminals are implicitly defined in the parser
 %%
 
@@ -24,10 +25,21 @@ import spbeaver.parser.SPParser.Terminals;
 
 // this code will be inlined in the body of the generated scanner class
 %{
+  public PreprocessorHandler preprocessor = null;
+  
   private beaver.Symbol sym(short id) {
-    return new beaver.Symbol(id, yyline + 1, yycolumn + 1, yylength(), yytext());
+    return sym(id, yytext());
   }
   private beaver.Symbol sym(short id, Object value) {
+    
+    // We encountered an #endinput directive
+    if (preprocessor.endInput()) {
+      // Continue lexing other included files.
+      preprocessor.clearEndInput();
+      // Simulate end-of-file!
+      return new beaver.Symbol(Terminals.EOF, "end-of-file (#endinput)");
+    }
+    
     return new beaver.Symbol(id, yyline + 1, yycolumn + 1, yylength(), value);
   }
 %}
