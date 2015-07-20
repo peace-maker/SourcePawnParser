@@ -235,15 +235,12 @@ Preprocessor = PREPROCESSOR.pre
 	                // Remember it if it was sane.
 	                preprocessor.add(stmt.getStatement());
 	                return new PreprocessorLine(stmt, pre);
-	            }
-			    catch (beaver.Parser.Exception e) {
-			        System.err.println("Error when parsing preprocessor line: " + pre);      
-			        System.err.println(e.getMessage());      
+	            } catch (beaver.Parser.Exception e) {
+			        parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + pre + "\n" + e.getMessage(), _symbol_pre));
 			    } catch (PreprocessorHandler.Exception e) {
-			        System.err.println(e.getMessage());
-			        // TODO: STOP PARSING!!!
+			        parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + pre + "\n" + e.getMessage(), _symbol_pre));
 			    } catch (IOException e) {
-		            System.err.println("Error reading preprocessor line: " + e.getMessage());
+			        parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), _symbol_pre));
 		        }
                 // Make the current parser happy.
                 return new PreprocessorLine(null, pre);

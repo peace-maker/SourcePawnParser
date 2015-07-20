@@ -5,6 +5,16 @@ package spbeaver.preprocessor;
 %import "spbeaver.preprocessor.IncludeFlags";
 %import "spbeaver.BinaryOperator.BinaryOp";
 %import "spbeaver.UnaryOperator.UnaryOp";
+%import "java.io.IOException";
+
+%embed {:
+    // Disable error recovery.
+    protected void recoverFromError(Symbol token, TokenStream in) throws IOException, Parser.Exception
+    {
+        // Don't recover from errors!
+        throw new Parser.Exception("Cannot recover from the syntax error in preprocessor directive.");
+    }
+:};
 
 %terminals IF, ELSEIF, ELSE, ENDIF;//, DEFINED;
 %terminals ERROR;
