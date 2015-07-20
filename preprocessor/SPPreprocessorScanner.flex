@@ -24,6 +24,9 @@ import spbeaver.preprocessor.SPPreprocessorParser.Terminals;
 
 // this code will be inlined in the body of the generated scanner class
 %{
+  public void setCurrentLine(int line) {
+    yyline = line;
+  }
   private beaver.Symbol sym(short id) {
     return new beaver.Symbol(id, yyline + 1, yycolumn + 1, yylength(), yytext());
   }
@@ -62,17 +65,47 @@ MultiComment   = "/*" ~"*/"
 
 // Keywords
 "define" { return sym(Terminals.DEFINE); }
+"undef" { return sym(Terminals.UNDEFINE); }
 "include" { return sym(Terminals.INCLUDE); }
+"tryinclude" { return sym(Terminals.TRYINCLUDE); }
 "endinput" { return sym(Terminals.ENDINPUT); }
 
-//"if" { return sym(Terminals.IF); }
-//"else" { return sym(Terminals.ELSE); }
-//"endif" { return sym(Terminals.ENDIF); }
+"error" { return sym(Terminals.ERROR); }
+//"assert" { return sym(Terminals.ASSERT); }
+
+"if" { return sym(Terminals.IF); }
+"elseif" { return sym(Terminals.ELSEIF); }
+"else" { return sym(Terminals.ELSE); }
+"endif" { return sym(Terminals.ENDIF); }
 
 //"defined" { return sym(Terminals.DEFINED); }
 
+// Separators
+"(" { return sym(Terminals.LPAREN); }
+")" { return sym(Terminals.RPAREN); }
+
+// Operators
 "<" { return sym(Terminals.LT); }
 ">" { return sym(Terminals.GT); }
+"!" { return sym(Terminals.BANG); }
+"~" { return sym(Terminals.TILDE); }
+"+" { return sym(Terminals.PLUS); }
+"-" { return sym(Terminals.MINUS); }
+"*" { return sym(Terminals.STAR); }
+"/" { return sym(Terminals.SLASH); }
+"&" { return sym(Terminals.AMPERSAND); }
+"|" { return sym(Terminals.BITOR); }
+"^" { return sym(Terminals.BITXOR); }
+"%" { return sym(Terminals.PERCENT); }
+"==" { return sym(Terminals.EQ); }
+"<=" { return sym(Terminals.LE); }
+">=" { return sym(Terminals.GE); }
+"!=" { return sym(Terminals.NE); }
+"||" { return sym(Terminals.LOGICOR); }
+"&&" { return sym(Terminals.LOGICAND); }
+"<<" { return sym(Terminals.SHL); }
+">>>" { return sym(Terminals.SHRU); }
+">>" { return sym(Terminals.SHR); }
 
 {IntegerLiteral} { return sym(Terminals.INTEGERLIT); }
 {FloatLiteral} { return sym(Terminals.FLOATLIT); }

@@ -1,16 +1,17 @@
 %header {:
-package spbeaver;
+package spbeaver.parser;
 :};
 
 %import "spbeaver.UnaryOperator.UnaryOp";
 %import "spbeaver.BinaryOperator.BinaryOp";
-%import "spbeaver.DeclFlags";
+%import "spbeaver.parser.DeclFlags";
 %import "java.util.HashMap";
 %import "java.util.LinkedList";
 %import "java.io.IOException";
 %import "spbeaver.preprocessor.SPPreprocessorScanner";
 %import "spbeaver.preprocessor.SPPreprocessorParser";
 %import "spbeaver.preprocessor.Preprocessor";
+%import "spbeaver.preprocessor.PreprocessorHandler";
 %import "java.io.ByteArrayInputStream";
 %import "java.io.InputStreamReader";
 
@@ -51,11 +52,11 @@ package spbeaver;
     /** List of errors encountered during parsing */
     public LinkedList<SPParser.Exception> parseErrors = new LinkedList<SPParser.Exception>();
     
+    /** List of preprocessor statements */
+    public PreprocessorHandler preprocessor = new PreprocessorHandler(this);
+    
     /** Preprocessor parser instance */
     public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
-    
-    /** List of preprocessor statements */
-    public LinkedList<Preprocessor> preprocessor = new LinkedList<Preprocessor>();
     
     /**
      * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token
@@ -225,19 +226,27 @@ Preprocessor = PREPROCESSOR.pre
                 try
                 {
                     // Try to parse the preprocessor line
-	                Preprocessor stmt = (Preprocessor) preprocessorParser.parse(new SPPreprocessorScanner(new InputStreamReader(new ByteArrayInputStream(preprocessInput.getBytes()))));
+                    SPPreprocessorScanner preprocessorScanner = new SPPreprocessorScanner(new ByteArrayInputStream(preprocessInput.getBytes()));
+                    // Tell the scanner, he's scanning the current line in the real file.
+                    preprocessorScanner.setCurrentLine(Symbol.getLine(_symbol_pre.getStart())-1);
+                    
+	                Preprocessor stmt = (Preprocessor) preprocessorParser.parse(preprocessorScanner);
+	                stmt.preprocessor = preprocessor;
 	                // Remember it if it was sane.
-	                preprocessor.add(stmt);
-	                System.out.print(pre);
+	                preprocessor.add(stmt.getStatement());
+	                return new PreprocessorLine(stmt, pre);
 	            }
 			    catch (beaver.Parser.Exception e) {
 			        System.err.println("Error when parsing preprocessor line: " + pre);      
 			        System.err.println(e.getMessage());      
+			    } catch (PreprocessorHandler.Exception e) {
+			        System.err.println(e.getMessage());
+			        // TODO: STOP PARSING!!!
 			    } catch (IOException e) {
 		            System.err.println("Error reading preprocessor line: " + e.getMessage());
 		        }
                 // Make the current parser happy.
-                return new PreprocessorLine(pre);
+                return new PreprocessorLine(null, pre);
              :}
 ;
 

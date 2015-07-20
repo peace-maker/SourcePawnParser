@@ -1,7 +1,10 @@
+import spbeaver.UnaryOperator;
 import spbeaver.UnaryOperator.UnaryOp;
+import spbeaver.BinaryOperator;
 import spbeaver.BinaryOperator.BinaryOp;
-import spbeaver.DeclFlags;
+import spbeaver.parser.DeclFlags;
 import java.util.HashMap;
+import spbeaver.preprocessor.Preprocessor;
 
 aspect ToString {
   syn lazy String Label.toString() {

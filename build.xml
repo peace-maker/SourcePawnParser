@@ -2,7 +2,8 @@
 
   <property name="parser.name" value="SPParser"/>
 
-  <property name="package" value="spbeaver"/>
+  <property name="package" value="spbeaver.parser"/>
+  <property name="package.dir" value="spbeaver/parser"/>
 
   <property name="src.dir" value="src"/>
   <property name="grammar.dir" value="compiler"/>
@@ -15,13 +16,13 @@
   <taskdef name="jastadd" classname="org.jastadd.JastAddTask" classpath="${tools}/jastadd2.jar" />
 
   <target name="scanner">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <jflex file="${grammar.dir}/SPScanner.flex" outdir="${gen.dir}/${package}" nobak="true" />
+    <mkdir dir="${gen.dir}/${package.dir}"/>
+    <jflex file="${grammar.dir}/SPScanner.flex" outdir="${gen.dir}/${package.dir}" nobak="true" />
   </target>
 
   <target name="parser">
-    <mkdir dir="${gen.dir}/${package}"/>
-    <beaver file="${grammar.dir}/SPParser.beaver" destdir="${gen.dir}/${package}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
+    <mkdir dir="${gen.dir}/${package.dir}"/>
+    <beaver file="${grammar.dir}/SPParser.beaver" destdir="${gen.dir}/${package.dir}" terminalNames="yes" compress="no" useSwitch="yes" reportActions="yes" />
   </target>
 
   <target name="jastadd">
@@ -57,7 +58,7 @@
   </target>
 
   <target name="clean">
-     <delete dir="${gen.dir}/${package}"/>
+     <delete dir="${gen.dir}/${package.dir}"/>
   </target>
 
   <!--<target name="test" depends="compile">

@@ -1,0 +1,111 @@
+import spbeaver.UnaryOperator.*;
+import spbeaver.BinaryOperator.*;
+aspect ExpressionEvaluation {
+
+    public PreprocessorHandler ASTNode.preprocessor = null;
+    
+    public PreprocessorHandler ASTNode.getPreprocessorHandler() {
+        if (preprocessor != null)
+            return preprocessor;
+        if (getParent() == null)
+            return null;
+        return getParent().getPreprocessorHandler();
+    }
+    
+    public Integer Expression.value() throws PreprocessorHandler.Exception {
+        throw new PreprocessorHandler.Exception("Must be constant expression."); // TODO: add location information
+    }
+    
+    public Integer IdentUse.value() throws PreprocessorHandler.Exception {
+        Opt<Expression> exprOpt = getPreprocessorHandler().getDefine(getID());
+        if (exprOpt == null)
+            throw new PreprocessorHandler.Exception("Undefined identifier \"" + getID() + "\".");
+        
+        // TODO: Show position of define.
+        if (exprOpt.getNumChild() == 0)
+            throw new PreprocessorHandler.Exception("Identifier \"" + getID() + "\" is defined without a value.");
+        
+        return exprOpt.getChild(0).value();
+    }
+    
+    public Integer BinaryExpression.value() throws PreprocessorHandler.Exception {
+        switch(getOperator()) {
+            case MUL:
+                return getLeft().value() * getRight().value();
+            case DIV:
+            {
+                int right = getRight().value();
+                if (right == 0)
+                    throw new PreprocessorHandler.Exception("Division by zero");
+                return getLeft().value() / getRight().value();
+            }
+            case MOD:
+            {
+                int right = getRight().value();
+                if (right == 0)
+                    throw new PreprocessorHandler.Exception("Division by zero");
+                return getLeft().value() % right;
+            }
+            case PLUS:
+                return getLeft().value() + getRight().value();
+            case MINUS:
+                return getLeft().value() - getRight().value();
+            case SHL:
+                return getLeft().value() << getRight().value();
+            // FIXME: UNSIGNED!!!1
+            case SHRU:
+                return getLeft().value() >>> getRight().value();
+            case SHR:
+                return getLeft().value() >> getRight().value();
+            case BITAND:
+                return getLeft().value() & getRight().value();
+            case BITOR:
+                return getLeft().value() | getRight().value();
+            case BITXOR:
+                return getLeft().value() ^ getRight().value();
+            
+            case LT:
+                return getLeft().value() < getRight().value() ? 1 : 0;
+            case LE:
+                return getLeft().value() <= getRight().value() ? 1 : 0;
+            case GT:
+                return getLeft().value() > getRight().value() ? 1 : 0;
+            case GE:
+                return getLeft().value() >= getRight().value() ? 1 : 0;
+            case EQ:
+                return getLeft().value() == getRight().value() ? 1 : 0;
+            case NE:
+                return getLeft().value() != getRight().value() ? 1 : 0;
+            
+            case OR:
+                return (getLeft().value() != 0) || (getRight().value() != 0) ? 1 : 0;
+            case AND:
+                return (getLeft().value() != 0) && (getRight().value() != 0) ? 1 : 0;
+            default:
+                throw new PreprocessorHandler.Exception("Unsupported binary operator: " + BinaryOperator.binaryOpToString(getOperator()));
+        }
+    }
+    
+    public Integer UnaryExpression.value() throws PreprocessorHandler.Exception {
+        switch(getOperator()) {
+            case NEG:
+                return -getExpr().value();
+            case INV:
+                return getExpr().value() == 0 ? 1 : 0;
+            case COMPL:
+                return ~getExpr().value();
+            default:
+                throw new PreprocessorHandler.Exception("Unsupported unary operator: " + UnaryOperator.unaryOpToString(getOperator()));
+        }
+    }
+    
+    public Integer SPInteger.value() throws PreprocessorHandler.Exception {
+        return Integer.parseInt(getInteger());
+    }
+    public Integer True.value() throws PreprocessorHandler.Exception {
+        return 1;
+    }
+    public Integer False.value() throws PreprocessorHandler.Exception {
+        return 0;
+    }
+}

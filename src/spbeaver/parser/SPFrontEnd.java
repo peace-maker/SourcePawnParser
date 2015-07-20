@@ -1,4 +1,4 @@
-package spbeaver;
+package spbeaver.parser;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,10 +27,10 @@ class SPFrontEnd {
       if (!parser.parseErrors.isEmpty())
           System.exit(1);
 
-      System.out.printf("Parsed %d preprocessor directives\n", parser.preprocessor.size());
-      for (Preprocessor pre: parser.preprocessor) {
-          System.out.println(pre.printAST());
-      }
+//      System.out.printf("Parsed %d preprocessor directives\n", parser.preprocessor.size());
+//      for (Preprocessor pre: parser.preprocessor) {
+//          System.out.println(pre.printAST());
+//      }
       
     /*  Set<Error> typeErrors = ast.getTypeErrors();
       if (!typeErrors.isEmpty()) {

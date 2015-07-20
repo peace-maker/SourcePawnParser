@@ -1,6 +1,6 @@
-package spbeaver; // The generated parser will belong to this package 
+package spbeaver.parser; // The generated parser will belong to this package 
 
-import spbeaver.SPParser.Terminals; 
+import spbeaver.parser.SPParser.Terminals; 
 // The terminals are implicitly defined in the parser
 %%
 

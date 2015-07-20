@@ -2,40 +2,208 @@
 package spbeaver.preprocessor;
 :};
 
-//%terminals IF, ELSE, ENDIF, DEFINED;
-%terminals INCLUDE, DEFINE, ENDINPUT;
-%terminals LT, GT;
+%import "spbeaver.preprocessor.IncludeFlags";
+%import "spbeaver.BinaryOperator.BinaryOp";
+%import "spbeaver.UnaryOperator.UnaryOp";
+
+%terminals IF, ELSEIF, ELSE, ENDIF;//, DEFINED;
+%terminals ERROR;
+%terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
+%terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
+%terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
+%terminals LPAREN, RPAREN;
 %terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, TRUE, FALSE, LITERAL;
 
 %typeof Goal = "Preprocessor";
+%typeof Statements = "Statement";
 %typeof Define = "Statement";
 %typeof EndInput = "Statement";
+%typeof UserError = "Statement";
 %typeof Include = "Statement";
+%typeof TryInclude = "Statement";
+
+%typeof If = "Statement";
+%typeof ElseIf = "Statement";
+%typeof Else = "Statement";
+%typeof EndIf = "Statement";
+
+%typeof Expression = "Expression";
+%typeof Or = "Expression";
+%typeof And = "Expression";
+
+%typeof Equals = "Expression";
+%typeof EqualsOperator = "BinaryOp";
+
+%typeof Relational = "Expression";
+%typeof RelationalOperator = "BinaryOp";
+
+%typeof BitOr = "Expression";
+%typeof BitXor = "Expression";
+%typeof BitAnd = "Expression";
+
+%typeof Shift = "Expression";
+%typeof ShiftOperator = "BinaryOp";
+
+%typeof Addition = "Expression";
+%typeof AdditionOperator = "BinaryOp";
+
+%typeof Multiplication = "Expression";
+%typeof MultiplicationOperator = "BinaryOp";
+
+%typeof Unary = "Expression";
+%typeof Prefix = "Expression";
 %typeof Primitive = "Expression";
-%typeof Identifier = "Identifier";
+%typeof Identifier = "IdentUse";
 
 %typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LITERAL = "String";
 
 %goal Goal;
 
-Goal = Define
-     | EndInput
-     | Include;
+Goal = Statements.stmt {: return new Preprocessor(stmt); :};
+
+Statements = Define
+           | Undefine
+           | EndInput
+           | UserError
+           | Include
+           | TryInclude
+           | If
+           | ElseIf
+           | Else
+           | EndIf
+;
 
 EndInput = ENDINPUT {: return new EndInput(); :};
 
-Include = INCLUDE STRINGLIT.file {: return new Include(file, 1); :}
-        | INCLUDE LT LITERAL.file GT {: return new Include(file, 2); :}
+UserError = ERROR IDENTIFIER.error {: return new UserError(error); :}
+          | ERROR LITERAL.error {: return new UserError(error); :}
 ;
 
-Define = DEFINE Identifier.id
+Include = INCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.LOCAL); :}
+        | INCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.PATH); :}
+        | INCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.PATH); :}
+;
+
+TryInclude = TRYINCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.TRY|IncludeFlags.LOCAL); :}
+           | TRYINCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.TRY|IncludeFlags.PATH); :}
+           | TRYINCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.TRY|IncludeFlags.PATH); :}
+;
+
+Define = DEFINE IDENTIFIER.id
        {:
             return new Define(id, new Opt<Expression>());
        :}
-       | DEFINE Identifier.id Primitive.value
+       | DEFINE IDENTIFIER.id Expression.value
        {:
             return new Define(id, new Opt<Expression>(value));
        :}
+;
+
+Undefine = UNDEFINE Identifier.id {: return new Undefine(id); :};
+
+// Conditionals
+If = IF Expression.expr {: return new If(expr); :};
+ElseIf = ELSEIF Expression.expr {: return new ElseIf(expr); :};
+Else = ELSE {: return new Else(); :};
+EndIf = ENDIF {: return new EndIf(); :};
+
+// EXPRESSIONS
+Expression = Or;
+
+Or = And
+   | And.lhs LOGICOR Or.rhs
+   {:
+        return new BinaryExpression(BinaryOp.OR, lhs, rhs);
+   :}
+;
+And = Equals
+    | Equals.lhs LOGICAND And.rhs
+    {:
+        return new BinaryExpression(BinaryOp.AND, lhs, rhs);
+    :}
+;
+Equals = Relational
+         | Relational.lhs EqualsOperator.op Equals.rhs
+         {:
+            return new BinaryExpression(op, lhs, rhs);
+         :}
+;
+EqualsOperator = EQ {: return new Symbol(BinaryOp.EQ); :}
+               | NE {: return new Symbol(BinaryOp.NE); :}
+;
+
+Relational = BitOr
+           | BitOr.lhs RelationalOperator.op BitOr.rhs // FIXME: error report: don't allow chained relationals a < b > c
+           {:
+                return new BinaryExpression(op, lhs, rhs);
+           :}
+;
+RelationalOperator = LT {: return new Symbol(BinaryOp.LT); :}
+                   | LE {: return new Symbol(BinaryOp.LE); :}
+                   | GT {: return new Symbol(BinaryOp.GT); :}
+                   | GE {: return new Symbol(BinaryOp.GE); :}
+;
+
+BitOr = BitXor
+       | BitXor.lhs BITOR BitOr.rhs
+       {:
+            return new BinaryExpression(BinaryOp.BITOR, lhs, rhs);
+       :}
+;
+BitXor = BitAnd
+       | BitAnd.lhs BITXOR BitXor.rhs
+       {:
+            return new BinaryExpression(BinaryOp.BITXOR, lhs, rhs);
+       :}
+;
+BitAnd = Shift
+       | Shift.lhs AMPERSAND BitAnd.rhs
+       {:
+            return new BinaryExpression(BinaryOp.BITAND, lhs, rhs);
+       :}
+;
+
+Shift = Addition
+      | Addition.lhs ShiftOperator.op Shift.rhs
+      {:
+        return new BinaryExpression(op, lhs, rhs);
+      :}
+;
+ShiftOperator = SHL {: return new Symbol(BinaryOp.SHL); :}
+              | SHR {: return new Symbol(BinaryOp.SHR); :}
+              | SHRU {: return new Symbol(BinaryOp.SHRU); :}
+;
+Addition = Multiplication
+         | Multiplication.lhs AdditionOperator.op Addition.rhs
+         {:
+            return new BinaryExpression(op, lhs, rhs);
+         :}
+;
+AdditionOperator = PLUS {: return new Symbol(BinaryOp.PLUS); :}
+                 | MINUS {: return new Symbol(BinaryOp.MINUS); :}
+;
+
+Multiplication = Unary
+               | Unary.lhs MultiplicationOperator.op Multiplication.rhs
+               {:
+                    return new BinaryExpression(op, lhs, rhs);
+               :}
+;
+MultiplicationOperator = SLASH {: return new Symbol(BinaryOp.DIV); :} 
+                       | STAR  {: return new Symbol(BinaryOp.MUL); :} 
+                       | PERCENT {: return new Symbol(BinaryOp.MOD); :}
+;
+
+
+Unary = MINUS Unary.u {: return new UnaryExpression(UnaryOp.NEG, u); :} // Negate
+      | BANG Unary.u {: return new UnaryExpression(UnaryOp.INV, u); :}    // Invert
+      | TILDE Unary.u {: return new UnaryExpression(UnaryOp.COMPL, u); :}// Complement
+      | Prefix
+;
+
+Prefix = LPAREN Expression.e RPAREN //{: return new Parenthesis(e); :}
+       | Identifier
+       | Primitive
 ;
 
 Primitive = FLOATLIT.f {: return new SPFloat(f); :}
@@ -44,7 +212,6 @@ Primitive = FLOATLIT.f {: return new SPFloat(f); :}
           | FALSE {: return new False(); :}
           | STRINGLIT.s {: return new SPString(s); :}
           | CHARLIT.s {: return new SPString(s); :}
-          | Identifier
 ;
 
-Identifier = IDENTIFIER.id {: return new Identifier(id); :};
+Identifier = IDENTIFIER.id {: return new IdentUse(id); :};

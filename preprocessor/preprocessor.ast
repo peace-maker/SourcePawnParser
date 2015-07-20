@@ -1,19 +1,33 @@
-abstract Preprocessor;
-abstract Statement:Preprocessor;
+Preprocessor ::= Statement;
+abstract Statement;
 
-Define:Statement ::= Name:Identifier [Value:Expression];
-EndInput:Statement;
+// Custom user errors and asserts
+UserError:Statement ::= <Error:String>;
+
+// Parse another file
 Include:Statement ::= <File:String> <Flags:Integer>;
+EndInput:Statement;
+
+// Constant definitions
+Define:Statement ::= <Name:String> [Value:Expression];
+Undefine:Statement ::= Name:IdentUse;
+
+If:Statement ::= Expr:Expression;
+ElseIf:Statement ::= Expr:Expression;
+Else:Statement;
+EndIf:Statement;
 
 abstract Expression;
+BinaryExpression:Expression ::= <Operator:BinaryOp> Left:Expression Right:Expression;
+UnaryExpression:Expression ::= <Operator:UnaryOp> Expr:Expression;
+
 abstract Prefix:Expression;
-Identifier:Prefix ::= <ID:String>;
+IdentUse:Prefix ::= <ID:String>;
 
 // Primitives
-abstract SPBoolean:Primitive;
 abstract Primitive:Expression;
-True:SPBoolean;
-False:SPBoolean;
+True:Primitive;
+False:Primitive;
 SPFloat:Primitive ::= <Float:String>;
 SPInteger:Primitive ::= <Integer:String>;
 SPString:Primitive ::= <String:String>;

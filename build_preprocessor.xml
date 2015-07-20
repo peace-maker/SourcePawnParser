@@ -41,19 +41,12 @@
 
   <target name="compile" depends="preprocess">
      <mkdir dir="${classes.dir}"/>
-     <javac srcdir="${gen.dir}"  
+     <javac srcdir="${gen.dir}/${package.dir}"  
             destdir="${classes.dir}"
             classpath="${tools}/beaver-rt.jar"
      		includeantruntime="true"
             debug="true" debuglevel="lines,vars,source">
              <include name="**/*.java"/>
-     </javac>
-     <javac srcdir="${src.dir}" 
-            destdir="${classes.dir}"
-            classpath="${classes.dir}:${tools}/beaver-rt.jar"
-     		includeantruntime="true"
-            debug="true" debuglevel="lines,vars,source">
-            <include name="**/*.java"/>
      </javac>
   </target>
 

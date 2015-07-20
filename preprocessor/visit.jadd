@@ -1,0 +1,23 @@
+aspect Visitor {
+    public void Statement.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        throw new PreprocessorHandler.Exception("Statement " + getClass().getSimpleName() + " not supported.");
+    }
+    public void Define.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception  {
+        visitor.accept(this);
+    }
+    public void Undefine.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+    public void If.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+    public void ElseIf.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+    public void Else.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+    public void EndIf.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+}

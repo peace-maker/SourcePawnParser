@@ -1,0 +1,123 @@
+aspect PrettyPrint {
+    public class PrettyPrinter {
+        public static String INDENT = "\t";
+        private StringBuilder sb;
+	  	public PrettyPrinter(){
+	  		sb = new StringBuilder();
+	  	}
+  
+	    public void append(String s) {
+	        sb.append(s);
+	    }
+    
+	    public String getString() {
+	        return sb.toString();
+	    }
+    }
+    
+    syn lazy PrettyPrinter Preprocessor.printer() {
+        return new PrettyPrinter();
+    }
+    eq Preprocessor.getStatement().printer() = this.printer();
+
+    inh lazy PrettyPrinter Statement.printer();
+    inh lazy PrettyPrinter Expression.printer();
+  
+    syn PrettyPrinter Preprocessor.print() {
+        getStatement().print();
+        return printer();
+    }
+  
+    abstract void Statement.print();
+  
+    public void UserError.print() {
+        printer().append("#error " + getError() + "\n");
+    }
+    
+    public void Include.print() {
+        if ((getFlags() & IncludeFlags.TRY) > 0)
+            printer().append("#tryinclude ");
+        else
+            printer().append("#include ");
+        
+        if ((getFlags() & IncludeFlags.PATH) > 0)
+            printer().append("<" + getFile() + ">\n");
+        else
+            printer().append("\"" + getFile() + "\"\n");
+    }
+    
+    public void EndInput.print() {
+        printer().append("#endinput\n");
+    }
+
+    public void Define.print() {
+        printer().append("#define " + getName());
+        if (hasValue()) {
+            printer().append(" ");
+            getValue().print();
+        }
+        printer().append("\n");
+    }
+  
+    public void Undefine.print() {
+        printer().append("#undef ");
+        getName().print();
+        printer().append("\n");
+    }
+    
+    public void If.print() {
+        printer().append("#if ");
+        getExpr().print();
+        printer().append("\n");
+    }
+    
+    public void ElseIf.print() {
+        printer().append("#elseif ");
+        getExpr().print();
+        printer().append("\n");
+    }
+    
+    public void Else.print() {
+        printer().append("#else\n");
+    }
+    
+    public void EndIf.print() {
+        printer().append("#endif\n");
+    }
+  
+  
+    abstract void Expression.print();
+    public void BinaryExpression.print() {
+        getLeft().print();
+        printer().append(" " + BinaryOperator.binaryOpToString(getOperator()) + " ");
+        getRight().print();
+    }
+
+    public void UnaryExpression.print() {
+        printer().append(UnaryOperator.unaryOpToString(getOperator()));
+        getExpr().print();
+    }
+
+    public void IdentUse.print() {
+        printer().append(getID());
+    }
+  
+    public void True.print() {
+        printer().append("true");
+    }
+    public void False.print() {
+        printer().append("false");
+    }
+    public void SPFloat.print() {
+        printer().append(getFloat());
+    }
+    public void SPInteger.print() {
+        printer().append(getInteger());
+    }
+    public void SPString.print() {
+        printer().append(getString());
+    }
+    public void SPCharacter.print() {
+        printer().append(getChar());
+    }
+}

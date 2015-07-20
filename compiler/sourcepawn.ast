@@ -3,7 +3,7 @@ SourcePawnFile ::= Statements:Statement*;
 
 abstract Statement;
 EmptyStatement:Statement;
-PreprocessorLine:Statement ::= <Line:String>;
+PreprocessorLine:Statement ::= <Line:Preprocessor> <RawLine:String>;
 
 Break:Statement;
 Continue:Statement;
@@ -37,12 +37,12 @@ StructStatement:Statement ::= Name:Identifier Fields:Declaration*;
 abstract Expression;
 EmptyExpression:Expression;
 
-Assignment:Expression ::= <Operator:spbeaver.BinaryOperator.BinaryOp> LHS:Expression RHS:Expression;
+Assignment:Expression ::= <Operator:BinaryOp> LHS:Expression RHS:Expression;
 TernaryExpression:Expression ::= Condition:Expression Left:Expression Right:Expression;
-BinaryExpression:Expression ::= <Operator:spbeaver.BinaryOperator.BinaryOp> LHS:Expression RHS:Expression;
+BinaryExpression:Expression ::= <Operator:BinaryOp> LHS:Expression RHS:Expression;
 
 abstract Unary:Expression;
-UnaryExpr:Expression ::= <Operator:spbeaver.UnaryOperator.UnaryOp> Expr:Expression;
+UnaryExpr:Expression ::= <Operator:UnaryOp> Expr:Expression;
 IncDec:UnaryExpr ::= <Postfix:boolean>;
 SizeOf:Unary ::= Name:Identifier <Level:int>;
 UnsafeCast:Unary ::= Label Expr:Expression;

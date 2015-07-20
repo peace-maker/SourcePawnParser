@@ -1,4 +1,4 @@
-package spbeaver;
+package spbeaver.parser;
 
 public class DeclFlags {
 	public static final int NONE = 0;

@@ -15,8 +15,15 @@ aspect PrintAST {
 			sb.append((j%2==0) ? " |" : " !");
 		}
 		sb.append(getClass().getName() + "\n");
+		printExtra(sb, t);
 		for (int i = 0; i < getNumChild(); i++) {
 			getChild(i).printAST(sb, t+1);
 		}
+	}
+	
+	protected void ASTNode.printExtra(StringBuilder sb, int t) {}
+	protected void PreprocessorLine.printExtra(StringBuilder sb, int t) {
+	    if (getLine() != null)
+	       getLine().printAST(sb, t);
 	}
 }
