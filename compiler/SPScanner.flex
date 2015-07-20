@@ -13,7 +13,7 @@ import spbeaver.preprocessor.PreprocessorHandler;
 
 // the interface between the scanner and the parser is the nextToken() method
 %type beaver.Symbol 
-%function nextToken 
+%function nextTokenReal 
 %yylexthrow beaver.Scanner.Exception
 %eofval{
 	return new beaver.Symbol(Terminals.EOF, "end-of-file");
@@ -26,6 +26,21 @@ import spbeaver.preprocessor.PreprocessorHandler;
 // this code will be inlined in the body of the generated scanner class
 %{
   public PreprocessorHandler preprocessor = null;
+  
+  // Get the next token if we're not skipping tokens due to #if #endif preprocessor directives.
+  public beaver.Symbol nextToken() throws java.io.IOException, beaver.Scanner.Exception {
+    beaver.Symbol sym;
+    do {
+        // Consume a token
+	    sym = nextTokenReal();
+	    // Always return preprocessor or end-of-file symbols.
+	    if (sym.getId() == Terminals.PREPROCESSOR || sym.getId() == Terminals.EOF)
+	        return sym;
+    // Get the next token, if we should still skip.
+    } while (preprocessor.shouldSkip());
+    // Return the first symbol we shouldn't skip anymore.
+    return sym;
+  }
   
   private beaver.Symbol sym(short id) {
     return sym(id, yytext());
