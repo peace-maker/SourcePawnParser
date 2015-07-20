@@ -16,7 +16,7 @@ package spbeaver.preprocessor;
     }
 :};
 
-%terminals IF, ELSEIF, ELSE, ENDIF;//, DEFINED;
+%terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
 %terminals ERROR;
 %terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
@@ -208,6 +208,8 @@ MultiplicationOperator = SLASH {: return new Symbol(BinaryOp.DIV); :}
 Unary = MINUS Unary.u {: return new UnaryExpression(UnaryOp.NEG, u); :} // Negate
       | BANG Unary.u {: return new UnaryExpression(UnaryOp.INV, u); :}    // Invert
       | TILDE Unary.u {: return new UnaryExpression(UnaryOp.COMPL, u); :}// Complement
+      | DEFINED Identifier.id {: return new Defined(id); :}
+      | DEFINED LPAREN Identifier.id RPAREN {: return new Defined(id); :}
       | Prefix
 ;
 

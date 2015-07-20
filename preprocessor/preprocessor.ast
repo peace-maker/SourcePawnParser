@@ -20,6 +20,7 @@ EndIf:Statement;
 abstract Expression;
 BinaryExpression:Expression ::= <Operator:BinaryOp> Left:Expression Right:Expression;
 UnaryExpression:Expression ::= <Operator:UnaryOp> Expr:Expression;
+Defined:Expression ::= Ident:IdentUse;
 
 abstract Prefix:Expression;
 IdentUse:Prefix ::= <ID:String>;

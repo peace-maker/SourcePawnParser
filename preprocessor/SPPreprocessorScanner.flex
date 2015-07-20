@@ -78,7 +78,7 @@ MultiComment   = "/*" ~"*/"
 "else" { return sym(Terminals.ELSE); }
 "endif" { return sym(Terminals.ENDIF); }
 
-//"defined" { return sym(Terminals.DEFINED); }
+"defined" { return sym(Terminals.DEFINED); }
 
 // Separators
 "(" { return sym(Terminals.LPAREN); }

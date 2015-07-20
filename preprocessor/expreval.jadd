@@ -99,6 +99,11 @@ aspect ExpressionEvaluation {
         }
     }
     
+    public Integer Defined.value() throws PreprocessorHandler.Exception {
+        Opt<Expression> exprOpt = getPreprocessorHandler().getDefine(getIdent().getID());
+        return exprOpt == null ? 0 : 1;
+    }
+    
     public Integer SPInteger.value() throws PreprocessorHandler.Exception {
         return Integer.parseInt(getInteger());
     }

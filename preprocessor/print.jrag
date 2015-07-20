@@ -98,6 +98,11 @@ aspect PrettyPrint {
         getExpr().print();
     }
 
+    public void Defined.print() {
+        printer().append("defined ");
+        getIdent().print();
+    }
+
     public void IdentUse.print() {
         printer().append(getID());
     }
