@@ -29,6 +29,10 @@ public class PreprocessorHandler {
     
     public PreprocessorHandler(SPParser parser) {
         this.parser = parser;
+        
+        // Add predefined __DATE__ and __TIME__
+        defines.put("__DATE__", new Opt<Expression>(new SPString("")));
+        defines.put("__TIME__", new Opt<Expression>(new SPString("")));
     }
     
     public Opt<Expression> getDefine(String define) {
