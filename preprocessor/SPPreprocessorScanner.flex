@@ -69,7 +69,7 @@ MultiComment   = "/*" ~"*/"
 "endinput" { return sym(Terminals.ENDINPUT); }
 
 "error" { return sym(Terminals.ERROR); }
-//"assert" { return sym(Terminals.ASSERT); }
+"assert" { return sym(Terminals.ASSERT); }
 
 "if" { return sym(Terminals.IF); }
 "elseif" { return sym(Terminals.ELSEIF); }

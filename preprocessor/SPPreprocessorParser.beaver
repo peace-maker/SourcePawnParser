@@ -17,7 +17,7 @@ package spbeaver.preprocessor;
 :};
 
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
-%terminals ERROR;
+%terminals ERROR, ASSERT;
 %terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
 %terminals PRAGMA, DEPRECATED;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
@@ -30,6 +30,7 @@ package spbeaver.preprocessor;
 %typeof Define = "Statement";
 %typeof EndInput = "Statement";
 %typeof UserError = "Statement";
+%typeof Assert = "Statement";
 %typeof Include = "Statement";
 %typeof TryInclude = "Statement";
 
@@ -78,6 +79,7 @@ Statements = Define
            | Undefine
            | EndInput
            | UserError
+           | Assert
            | Include
            | TryInclude
            | If
@@ -92,6 +94,8 @@ EndInput = ENDINPUT {: return new EndInput(); :};
 UserError = ERROR IDENTIFIER.error {: return new UserError(error); :}
           | ERROR LITERAL.error {: return new UserError(error); :}
 ;
+
+Assert = ASSERT Expression.expr {: return new UserAssert(expr); :};
 
 Include = INCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.LOCAL); :}
         | INCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.PATH); :}

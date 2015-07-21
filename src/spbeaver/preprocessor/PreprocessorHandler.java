@@ -138,6 +138,28 @@ public class PreprocessorHandler {
         endInput = true;
     }
     
+    public void accept(UserError error) throws Exception {
+        if (shouldSkip())
+            return;
+        
+        // This is a static error. Just do it!
+        throw new PreprocessorHandler.Exception("User error: " + error.getError(), error);
+    }
+    
+    public void accept(UserAssert userAssert) throws Exception {
+        if (shouldSkip())
+            return;
+        
+        // Check if this assertion is false.
+        if (userAssert.getExpr().value() == 0) {
+            userAssert.print();
+            String assertion = userAssert.printer().getString();
+            // Skip "#assert " and new line at the end
+            assertion = assertion.substring(8, assertion.length()-1);
+            throw new PreprocessorHandler.Exception("Assertion failed: " + assertion, userAssert);
+        }
+    }
+    
     public void accept(If expr) throws Exception {
         // We're currently skipping. Just keep track of nesting levels.
         if (shouldSkip()) {

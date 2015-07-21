@@ -34,6 +34,12 @@ aspect PrettyPrint {
         printer().append("#error " + getError() + "\n");
     }
     
+    public void UserAssert.print() {
+        printer().append("#assert ");
+        getExpr().print();
+        printer().append("\n");
+    }
+    
     public void Include.print() {
         if ((getFlags() & IncludeFlags.TRY) > 0)
             printer().append("#tryinclude ");

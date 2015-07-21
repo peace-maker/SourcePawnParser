@@ -3,6 +3,7 @@ abstract Statement;
 
 // Custom user errors and asserts
 UserError:Statement ::= <Error:String>;
+UserAssert:Statement ::= Expr:Expression;
 
 // Parse another file
 Include:Statement ::= <File:String> <Flags:Integer>;

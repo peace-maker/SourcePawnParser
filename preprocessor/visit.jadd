@@ -8,6 +8,12 @@ aspect Visitor {
     public void Undefine.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
         visitor.accept(this);
     }
+    public void UserError.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
+    public void UserAssert.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
     public void EndInput.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
         visitor.accept(this);
     }
