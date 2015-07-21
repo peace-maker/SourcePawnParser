@@ -23,26 +23,62 @@ package spbeaver.parser;
         public final Symbol symbol;
         public final int line;
         public final int column;
-        Exception(String msg)
+        public Exception(String msg)
         {
             super(msg);
             symbol = null;
             line = 0;
             column = 0;
         }
-        Exception(String msg, Symbol symbol)
+        public Exception(String msg, Symbol symbol)
         {
             super(msg);
             this.symbol = symbol;
             line = 0;
             column = 0;
         }
-        Exception(String msg, int line, int column)
+        public Exception(String msg, int line, int column)
         {
             super(msg);
             this.symbol = null;
             this.line = line;
             this.column = column;
+        }
+        
+        public String getMessage() {
+            java.lang.StringBuilder sb = new java.lang.StringBuilder();
+            if (symbol != null) {
+	            sb.append(Symbol.getLine(symbol.getStart()));
+	            sb.append(',');
+	            sb.append(Symbol.getColumn(symbol.getStart()));
+	            sb.append('-');
+	            sb.append(Symbol.getLine(symbol.getEnd()));
+	            sb.append(',');
+	            sb.append(Symbol.getColumn(symbol.getEnd()));
+	            sb.append(" ");
+	            /*sb.append(" (token ");
+	            if (symbol.value != null)
+	            {
+	                sb.append('"');
+	                sb.append(symbol.value);
+	                sb.append('"');
+	            }
+	            else
+	            {
+	                sb.append('#');
+	                sb.append(symbol.getId());
+	            }
+	            sb.append("): ");*/
+	        }
+	        else if (line > 0)
+            {
+                sb.append(line);
+                sb.append(',');
+                sb.append(column);
+                sb.append(':');
+            }
+            sb.append(super.getMessage());
+            return sb.toString();
         }
     }
 
@@ -236,9 +272,9 @@ Preprocessor = PREPROCESSOR.pre
 	                preprocessor.add(stmt.getStatement());
 	                return new PreprocessorLine(stmt, pre);
 	            } catch (beaver.Parser.Exception e) {
-			        parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + pre + "\n" + e.getMessage(), _symbol_pre));
+			        parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage(), _symbol_pre));
 			    } catch (PreprocessorHandler.Exception e) {
-			        parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + pre + "\n" + e.getMessage(), _symbol_pre));
+			        parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
 			    } catch (IOException e) {
 			        parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), _symbol_pre));
 		        }

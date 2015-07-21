@@ -8,9 +8,13 @@ import spbeaver.parser.SPParser;
 public class PreprocessorHandler {
     static public class Exception extends java.lang.Exception
     {
-        Exception(String msg)
-        {
+        beaver.Symbol symbol;
+        public Exception(String msg, beaver.Symbol symbol) {
             super(msg);
+            this.symbol = symbol;
+        }
+        public beaver.Symbol getSymbol() {
+            return symbol;
         }
     }
     
@@ -33,6 +37,14 @@ public class PreprocessorHandler {
         // Add predefined __DATE__ and __TIME__
         defines.put("__DATE__", new Opt<Expression>(new SPString("")));
         defines.put("__TIME__", new Opt<Expression>(new SPString("")));
+    }
+    
+    public SPParser getParser() {
+        return parser;
+    }
+    
+    public void addParseError(String error, beaver.Symbol symbol) {
+        getParser().parseErrors.add(new SPParser.Exception(error, symbol));
     }
     
     public Opt<Expression> getDefine(String define) {
@@ -90,7 +102,7 @@ public class PreprocessorHandler {
             return;
         
         if (defines.containsKey(def.getName()))
-            throw new PreprocessorHandler.Exception("\"" + def.getName() + "\" is already defined."); // TODO: Tell location of already defined symbol
+            throw new PreprocessorHandler.Exception("\"" + def.getName() + "\" is already defined.", def); // TODO: Tell location of already defined symbol
         
         defines.put(def.getName(), def.getValueOpt());
     }
@@ -100,7 +112,7 @@ public class PreprocessorHandler {
             return;
         
         if (!defines.containsKey(undef.getName().getID()))
-            throw new PreprocessorHandler.Exception("\"" + undef.getName().getID() + "\" is not defined.");
+            throw new PreprocessorHandler.Exception("\"" + undef.getName().getID() + "\" is not defined.", undef);
         
         defines.remove(undef.getName());
     }
@@ -129,7 +141,7 @@ public class PreprocessorHandler {
     
     public void accept(ElseIf expr) throws Exception {
         if (ifstack.isEmpty())
-            throw new PreprocessorHandler.Exception("#elseif without an #if!"); // TODO: Tell location
+            throw new PreprocessorHandler.Exception("#elseif without an #if!", expr);
         
         switch (ifstack.pop()) {
         // We're currently skipping. Just keep track of nesting levels.
@@ -153,7 +165,7 @@ public class PreprocessorHandler {
     
     public void accept(Else expr) throws Exception {
         if (ifstack.isEmpty())
-            throw new PreprocessorHandler.Exception("#else without an #if!"); // TODO: Tell location
+            throw new PreprocessorHandler.Exception("#else without an #if!", expr);
         
         switch (ifstack.pop()) {
         // We're currently skipping. Just keep track of nesting levels.
@@ -171,7 +183,7 @@ public class PreprocessorHandler {
     
     public void accept(EndIf expr) throws Exception {
         if (ifstack.isEmpty())
-            throw new PreprocessorHandler.Exception("#endif without an #if!"); // TODO: Tell location
+            throw new PreprocessorHandler.Exception("#endif without an #if!", expr);
         ifstack.pop();
     }
 }

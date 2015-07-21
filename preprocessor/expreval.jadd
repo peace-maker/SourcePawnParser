@@ -1,5 +1,6 @@
 import spbeaver.UnaryOperator.*;
 import spbeaver.BinaryOperator.*;
+import spbeaver.parser.SPParser;
 aspect ExpressionEvaluation {
 
     public PreprocessorHandler ASTNode.preprocessor = null;
@@ -13,17 +14,22 @@ aspect ExpressionEvaluation {
     }
     
     public Integer Expression.value() throws PreprocessorHandler.Exception {
-        throw new PreprocessorHandler.Exception("Must be constant expression."); // TODO: add location information
+        getPreprocessorHandler().addParseError("Error when processing preprocessor line: Must be constant expression, assumed zero.", this);
+        return 0;
     }
     
     public Integer IdentUse.value() throws PreprocessorHandler.Exception {
         Opt<Expression> exprOpt = getPreprocessorHandler().getDefine(getID());
-        if (exprOpt == null)
-            throw new PreprocessorHandler.Exception("Undefined identifier \"" + getID() + "\".");
+        if (exprOpt == null) {
+            getPreprocessorHandler().addParseError("Error when processing preprocessor line: Undefined identifier \"" + getID() + "\", assumed zero.", this);
+            return 0;
+        }
         
         // TODO: Show position of define.
-        if (exprOpt.getNumChild() == 0)
-            throw new PreprocessorHandler.Exception("Identifier \"" + getID() + "\" is defined without a value.");
+        if (exprOpt.getNumChild() == 0) {
+            getPreprocessorHandler().addParseError("Error when processing preprocessor line: Identifier \"" + getID() + "\" is defined without a value, assumed zero.", this);
+            return 0;
+        }
         
         return exprOpt.getChild(0).value();
     }
@@ -36,14 +42,14 @@ aspect ExpressionEvaluation {
             {
                 int right = getRight().value();
                 if (right == 0)
-                    throw new PreprocessorHandler.Exception("Division by zero");
+                    throw new PreprocessorHandler.Exception("Division by zero", this);
                 return getLeft().value() / getRight().value();
             }
             case MOD:
             {
                 int right = getRight().value();
                 if (right == 0)
-                    throw new PreprocessorHandler.Exception("Division by zero");
+                    throw new PreprocessorHandler.Exception("Division by zero", this);
                 return getLeft().value() % right;
             }
             case PLUS:
@@ -82,7 +88,7 @@ aspect ExpressionEvaluation {
             case AND:
                 return (getLeft().value() != 0) && (getRight().value() != 0) ? 1 : 0;
             default:
-                throw new PreprocessorHandler.Exception("Unsupported binary operator: " + BinaryOperator.binaryOpToString(getOperator()));
+                throw new PreprocessorHandler.Exception("Unsupported binary operator: " + BinaryOperator.binaryOpToString(getOperator()), this);
         }
     }
     
@@ -95,7 +101,7 @@ aspect ExpressionEvaluation {
             case COMPL:
                 return ~getExpr().value();
             default:
-                throw new PreprocessorHandler.Exception("Unsupported unary operator: " + UnaryOperator.unaryOpToString(getOperator()));
+                throw new PreprocessorHandler.Exception("Unsupported unary operator: " + UnaryOperator.unaryOpToString(getOperator()), this);
         }
     }
     
