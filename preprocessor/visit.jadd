@@ -23,4 +23,7 @@ aspect Visitor {
     public void EndIf.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
         visitor.accept(this);
     }
+    public void DeprecatedMsg.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
 }

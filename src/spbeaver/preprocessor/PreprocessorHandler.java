@@ -28,8 +28,11 @@ public class PreprocessorHandler {
     private Stack<IfState> ifstack = new Stack<>();
     // Set by the #endinput directive
     private boolean endInput = false;
-    
+    // Map of #define's and their values
     private HashMap<String, Opt<Expression>> defines = new HashMap<>();
+    // Deprecated message for next method declaration
+    private boolean deprecated = false;
+    private String deprecatedMessage = "";
     
     public PreprocessorHandler(SPParser parser) {
         this.parser = parser;
@@ -79,6 +82,17 @@ public class PreprocessorHandler {
             // Assume zero.
             return "0";
         }
+    }
+    
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+    
+    public String takeDeprecatedMessage() {
+        String msg = deprecatedMessage;
+        deprecated = false;
+        deprecatedMessage = "";
+        return msg;
     }
     
     public boolean shouldSkip() {
@@ -185,5 +199,16 @@ public class PreprocessorHandler {
         if (ifstack.isEmpty())
             throw new PreprocessorHandler.Exception("#endif without an #if!", expr);
         ifstack.pop();
+    }
+    
+    public void accept(DeprecatedMsg deprecated) throws Exception {
+        if (shouldSkip())
+            return;
+        
+        // Remember this deprecated message
+        // Just overwrite multiple following ones.
+        // This is picked up by the next Method declaration.
+        this.deprecated = true;
+        deprecatedMessage = deprecated.getMessage();
     }
 }

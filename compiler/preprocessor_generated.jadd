@@ -1,0 +1,11 @@
+aspect PreprocessorGeneratedAttributes {
+    private String Method.deprecatedMessage;
+    
+    public String Method.getDeprecatedMessage() {
+        return deprecatedMessage;
+    }
+    
+    public void Method.setDeprecatedMessage(String msg) {
+        deprecatedMessage = msg;
+    }
+}

@@ -19,6 +19,7 @@ package spbeaver.preprocessor;
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
 %terminals ERROR;
 %terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
+%terminals PRAGMA, DEPRECATED;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
 %terminals LPAREN, RPAREN;
@@ -36,6 +37,8 @@ package spbeaver.preprocessor;
 %typeof ElseIf = "Statement";
 %typeof Else = "Statement";
 %typeof EndIf = "Statement";
+%typeof Pragma = "Statement";
+%typeof Deprecated = "Statement";
 
 %typeof Expression = "Expression";
 %typeof Or = "Expression";
@@ -81,6 +84,7 @@ Statements = Define
            | ElseIf
            | Else
            | EndIf
+           | Pragma
 ;
 
 EndInput = ENDINPUT {: return new EndInput(); :};
@@ -116,6 +120,12 @@ If = IF Expression.expr {: return new If(expr); :};
 ElseIf = ELSEIF Expression.expr {: return new ElseIf(expr); :};
 Else = ELSE {: return new Else(); :};
 EndIf = ENDIF {: return new EndIf(); :};
+
+// Pragma
+Pragma = PRAGMA Deprecated;
+Deprecated = DEPRECATED {: return new DeprecatedMsg(""); :}
+           | DEPRECATED STRINGLIT.msg {: return new DeprecatedMsg(msg); :}
+;
 
 // EXPRESSIONS
 Expression = Or;

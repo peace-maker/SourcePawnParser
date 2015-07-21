@@ -17,6 +17,10 @@ ElseIf:Statement ::= Expr:Expression;
 Else:Statement;
 EndIf:Statement;
 
+// Pragmas
+abstract Pragma:Statement;
+DeprecatedMsg:Pragma ::= <Message:String>;
+
 abstract Expression;
 BinaryExpression:Expression ::= <Operator:BinaryOp> Left:Expression Right:Expression;
 UnaryExpression:Expression ::= <Operator:UnaryOp> Expr:Expression;

@@ -78,6 +78,9 @@ MultiComment   = "/*" ~"*/"
 
 "defined" { return sym(Terminals.DEFINED); }
 
+"pragma" { return sym(Terminals.PRAGMA); }
+"deprecated" { return sym(Terminals.DEPRECATED); }
+
 // Separators
 "(" { return sym(Terminals.LPAREN); }
 ")" { return sym(Terminals.RPAREN); }

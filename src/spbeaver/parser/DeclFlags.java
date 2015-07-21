@@ -10,9 +10,11 @@ public class DeclFlags {
 	public static final int CONST = (1<<5);
 	public static final int VARIADIC = (1<<6);
 	
-	public static final int NATIVE = (1<<7);
-	public static final int FORWARD = (1<<8);
-	public static final int FUNCTAG = (1<<9);
+	public static final int DEPRECATED = (1<<7);
 	
-	public static final int INLINE = (1<<10);
+	public static final int NATIVE = (1<<8);
+	public static final int FORWARD = (1<<9);
+	public static final int FUNCTAG = (1<<10);
+	
+	public static final int INLINE = (1<<11);
 }

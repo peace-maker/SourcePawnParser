@@ -113,6 +113,23 @@ package spbeaver.parser;
         
         super.recoverFromError(token, in);
     }
+    
+    // Helper method to add a deprecated flag to method declarations,
+    // if there was a #pragma deprecated line before.
+    protected Symbol newMethod(Identifier ident, Opt<Label> label, int flags, List<VarDecl> params, Opt<Statement> body) {
+        
+        // There is a #pragma deprecated pending.
+        // Add it to this declaration.
+        String deprecatedMessage = "";
+        if (preprocessor.isDeprecated()) {
+            flags |= DeclFlags.DEPRECATED;
+            deprecatedMessage = preprocessor.takeDeprecatedMessage();
+        }
+        
+        Method method = new Method(ident, label, flags, params, body);
+        method.setDeprecatedMessage(deprecatedMessage);
+        return method;
+    }
 :};
 
 %terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL;
@@ -509,59 +526,59 @@ MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced block
 
 Method = ModifiersList.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
-	   		return new Method(name, new Opt<Label>(label), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   		return newMethod(name, new Opt<Label>(label), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
 	   | ModifiersList.mod Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
-	   		return new Method(name, new Opt<Label>(), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   		return newMethod(name, new Opt<Label>(), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
 	   | Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
-	   		return new Method(name, new Opt<Label>(label), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   		return newMethod(name, new Opt<Label>(label), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
 	   | Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
-	   		return new Method(name, new Opt<Label>(), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
+	   		return newMethod(name, new Opt<Label>(), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
 ;
 
 
 NativeDecl = NATIVE Identifier.name LPAREN Arguments.args? RPAREN
 		  {:
-		  		return new Method(name, new Opt<Label>(), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+		  		return newMethod(name, new Opt<Label>(), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
 		  | NATIVE Label.label Identifier.name LPAREN Arguments.args? RPAREN
 		  {:
-		  		return new Method(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+		  		return newMethod(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
 ;
 
 ForwardDecl = FORWARD Identifier.name LPAREN Arguments.args? RPAREN
 			{:
-				return new Method(name, new Opt<Label>(), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
+				return newMethod(name, new Opt<Label>(), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
 			:}
 			| FORWARD Label.label Identifier.name LPAREN Arguments.args? RPAREN
 			{:
-				return new Method(name, new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
+				return newMethod(name, new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
 			:}
 ;
 
 FunctagDecl = FUNCTAG PUBLIC Identifier.name LPAREN Arguments.args? RPAREN
             {:
-                return new Method(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                return newMethod(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
             | FUNCTAG PUBLIC Label.label Identifier.name LPAREN Arguments.args? RPAREN
             {:
-                return new Method(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                return newMethod(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
             // Syntax is mixed up in some includes ...
             | FUNCTAG Identifier.name PUBLIC LPAREN Arguments.args? RPAREN
             {:
-                return new Method(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                return newMethod(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
             | FUNCTAG Identifier.name Label.label PUBLIC LPAREN Arguments.args? RPAREN
             {:
-                return new Method(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                return newMethod(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
 ;
 
