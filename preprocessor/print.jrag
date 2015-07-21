@@ -107,22 +107,14 @@ aspect PrettyPrint {
         printer().append(getID());
     }
   
-    public void True.print() {
-        printer().append("true");
-    }
-    public void False.print() {
-        printer().append("false");
-    }
-    public void SPFloat.print() {
-        printer().append(getFloat());
-    }
     public void SPInteger.print() {
         printer().append(getInteger());
     }
     public void SPString.print() {
+        printer().append("\"" + getString() + "\"");
+    }
+    public void Literal.print() {
         printer().append(getString());
     }
-    public void SPCharacter.print() {
-        printer().append(getChar());
-    }
+
 }

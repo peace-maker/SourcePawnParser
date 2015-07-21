@@ -107,10 +107,4 @@ aspect ExpressionEvaluation {
     public Integer SPInteger.value() throws PreprocessorHandler.Exception {
         return Integer.parseInt(getInteger());
     }
-    public Integer True.value() throws PreprocessorHandler.Exception {
-        return 1;
-    }
-    public Integer False.value() throws PreprocessorHandler.Exception {
-        return 0;
-    }
 }

@@ -22,7 +22,7 @@ package spbeaver.preprocessor;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
 %terminals LPAREN, RPAREN;
-%terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, TRUE, FALSE, LITERAL;
+%terminals INTEGERLIT, STRINGLIT, IDENTIFIER, LITERAL;
 
 %typeof Goal = "Preprocessor";
 %typeof Statements = "Statement";
@@ -65,7 +65,7 @@ package spbeaver.preprocessor;
 %typeof Primitive = "Expression";
 %typeof Identifier = "IdentUse";
 
-%typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LITERAL = "String";
+%typeof INTEGERLIT, STRINGLIT, IDENTIFIER, LITERAL = "String";
 
 %goal Goal;
 
@@ -218,12 +218,9 @@ Prefix = LPAREN Expression.e RPAREN //{: return new Parenthesis(e); :}
        | Primitive
 ;
 
-Primitive = FLOATLIT.f {: return new SPFloat(f); :}
-          | INTEGERLIT.i {: return new SPInteger(i); :}
-          | TRUE {: return new True(); :}
-          | FALSE {: return new False(); :}
+Primitive = INTEGERLIT.i {: return new SPInteger(i); :}
           | STRINGLIT.s {: return new SPString(s); :}
-          | CHARLIT.s {: return new SPString(s); :}
+          | LITERAL.s {: return new Literal(s); :}
 ;
 
 Identifier = IDENTIFIER.id {: return new IdentUse(id); :};

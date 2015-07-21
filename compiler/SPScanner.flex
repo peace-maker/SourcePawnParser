@@ -2,6 +2,7 @@ package spbeaver.parser; // The generated parser will belong to this package
 
 import spbeaver.parser.SPParser.Terminals; 
 import spbeaver.preprocessor.PreprocessorHandler;
+import java.util.Stack;
 // The terminals are implicitly defined in the parser
 %%
 
@@ -25,6 +26,48 @@ import spbeaver.preprocessor.PreprocessorHandler;
 
 // this code will be inlined in the body of the generated scanner class
 %{
+  private Stack<SPScanner> stackedScanners = new Stack<>();
+  
+  // Save the current state
+  public void pushCurrentScannerState() {
+    SPScanner cur = new SPScanner(zzReader);
+    cur.zzState = zzState;
+    cur.zzLexicalState = zzLexicalState;
+    cur.zzBuffer = zzBuffer;
+    cur.zzMarkedPos = zzMarkedPos;
+    cur.zzPushbackPos = zzPushbackPos;
+    cur.zzCurrentPos = zzCurrentPos;
+    cur.zzStartRead = zzStartRead;
+    cur.zzEndRead = zzEndRead;
+    cur.yyline = yyline;
+    cur.yychar = yychar;
+    cur.yycolumn = yycolumn;
+    cur.zzAtBOL = zzAtBOL;
+    cur.zzAtEOF = zzAtEOF;
+    stackedScanners.push(cur);
+  }
+  
+  // Reapply the last state from the stack.
+  public void popScannerState() {
+    SPScanner last = stackedScanners.pop();
+    zzReader = last.zzReader;
+    zzState = last.zzState;
+    zzLexicalState = last.zzLexicalState;
+    zzBuffer = last.zzBuffer;
+    zzMarkedPos = last.zzMarkedPos;
+    zzPushbackPos = last.zzPushbackPos;
+    zzCurrentPos = last.zzCurrentPos;
+    zzStartRead = last.zzStartRead;
+    zzEndRead = last.zzEndRead;
+    yyline = last.yyline;
+    yychar = last.yychar;
+    yycolumn = last.yycolumn;
+    zzAtBOL = last.zzAtBOL;
+    zzAtEOF = last.zzAtEOF;
+  }
+  
+  
+  // Reference to our preprocessor handler.
   public PreprocessorHandler preprocessor = null;
   
   // Get the next token if we're not skipping tokens due to #if #endif preprocessor directives.
@@ -33,6 +76,29 @@ import spbeaver.preprocessor.PreprocessorHandler;
     do {
         // Consume a token
 	    sym = nextTokenReal();
+	    
+	    // If we encountered the end of the macro replacement, continue scanning the previous text.
+	    if (sym.getId() == Terminals.EOF && !stackedScanners.isEmpty()) {
+	       popScannerState();
+	       return nextToken();
+	    }
+	    
+	    // See if this is a define
+	    if (sym.getId() == Terminals.IDENTIFIER && preprocessor.getDefine((String)sym.value) != null) {
+	       // Replace identifier with what it's defined to in some #define preprocessor directive.
+	       String replacement = preprocessor.replaceDefine((String)sym.value);
+	       
+	       // Start lexing from this replacement string until we reach the end.
+	       pushCurrentScannerState();
+	       int lastLine = yyline;
+	       int lastColumn = yycolumn;
+	       yyreset(new java.io.InputStreamReader(new java.io.ByteArrayInputStream(replacement.getBytes())));
+	       yyline = lastLine;
+	       yycolumn = lastColumn;
+	       // TODO: Keep track of original macro identifier for pretty printing!
+	       return nextToken();
+	    }
+	    
 	    // Always return preprocessor or end-of-file symbols.
 	    if (sym.getId() == Terminals.PREPROCESSOR || sym.getId() == Terminals.EOF)
 	        return sym;

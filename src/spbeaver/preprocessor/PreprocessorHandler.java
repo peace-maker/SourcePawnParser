@@ -39,6 +39,36 @@ public class PreprocessorHandler {
         return defines.get(define);
     }
     
+    public String replaceDefine(String define) {
+        // See if it's defined
+        Opt<Expression> exprOpt = getDefine(define);
+        // Not defined. Just return original string.
+        if (exprOpt == null)
+            return define;
+        
+        // This is defined but has no value.
+        if (exprOpt.getNumChild() == 0)
+            return "";
+        
+        Expression expr = exprOpt.getChild(0);
+        
+        // Just paste this thing directly
+        if (expr instanceof Literal)
+            return ((Literal)expr).getString();
+        
+        // Insert the String
+        if (expr instanceof SPString)
+            return ((SPString)expr).getString();
+        
+        // Evaluate integer expressions before inserting
+        try {
+            return String.valueOf(expr.value());
+        } catch (Exception e) {
+            // Assume zero.
+            return "0";
+        }
+    }
+    
     public boolean shouldSkip() {
         return !ifstack.isEmpty() && (ifstack.peek() == IfState.IGNORE || ifstack.peek() == IfState.SKIP);
     }

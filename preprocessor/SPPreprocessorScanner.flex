@@ -44,10 +44,8 @@ DecimalLiteral   = [1-9][0-9_]* | 0
 HexLiteral       = "0x" [0-9a-fA-F]+
 //OctalLiteral     = 0 [0-7]+ // NO OCTALS IN PAWN :'(
 IntegerLiteral   = {DecimalLiteral} | {HexLiteral}
-FloatLiteral     = [0-9]+ "." [0-9]+ ( e "-"? [0-9]+)?
 
 EscapeCode       = \\ | (a|b|e|f|n|r|t|v) | x [0-9a-fA-F]{0,2} ;? | (\'|\"|\%) | [0-9]{1,3} ;?
-CharacterLiteral = \' ( [^\'\\\n\r] | \\ {EscapeCode} ) \'
 StringLiteral    = \" ( [^\"\\\n\r] | \\ {EscapeCode} | \\ [ \t\f]* {LineTerminator})* \"
 
 Identifier     = [a-zA-Z_][a-zA-Z0-9_]*
@@ -108,8 +106,6 @@ MultiComment   = "/*" ~"*/"
 ">>" { return sym(Terminals.SHR); }
 
 {IntegerLiteral} { return sym(Terminals.INTEGERLIT); }
-{FloatLiteral} { return sym(Terminals.FLOATLIT); }
-{CharacterLiteral} { return sym(Terminals.CHARLIT); }
 {StringLiteral} { return sym(Terminals.STRINGLIT); }
 {Identifier} { return sym(Terminals.IDENTIFIER); }
 

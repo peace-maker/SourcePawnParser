@@ -27,9 +27,6 @@ IdentUse:Prefix ::= <ID:String>;
 
 // Primitives
 abstract Primitive:Expression;
-True:Primitive;
-False:Primitive;
-SPFloat:Primitive ::= <Float:String>;
 SPInteger:Primitive ::= <Integer:String>;
 SPString:Primitive ::= <String:String>;
-SPCharacter:Primitive ::= <Char:String>;
+Literal:Primitive ::= <String:String>;
