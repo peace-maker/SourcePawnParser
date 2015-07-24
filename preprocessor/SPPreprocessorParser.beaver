@@ -19,7 +19,7 @@ package spbeaver.preprocessor;
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
 %terminals ERROR, ASSERT;
 %terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
-%terminals PRAGMA, DEPRECATED;
+%terminals PRAGMA, DEPRECATED, SEMICOLONLITERALLY;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
 %terminals LPAREN, RPAREN;
@@ -40,6 +40,7 @@ package spbeaver.preprocessor;
 %typeof EndIf = "Statement";
 %typeof Pragma = "Statement";
 %typeof Deprecated = "Statement";
+%typeof Semicolon = "Statement";
 
 %typeof Expression = "Expression";
 %typeof Or = "Expression";
@@ -126,10 +127,14 @@ Else = ELSE {: return new Else(); :};
 EndIf = ENDIF {: return new EndIf(); :};
 
 // Pragma
-Pragma = PRAGMA Deprecated;
+Pragma = PRAGMA Deprecated
+       | PRAGMA Semicolon;
 Deprecated = DEPRECATED {: return new DeprecatedMsg(""); :}
+           // TODO: Just get rest of line as message
            | DEPRECATED STRINGLIT.msg {: return new DeprecatedMsg(msg); :}
 ;
+Semicolon = SEMICOLONLITERALLY Expression.i {: return new RequireSemicolon(i); :};
+
 
 // EXPRESSIONS
 Expression = Or;

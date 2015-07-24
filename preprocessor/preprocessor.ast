@@ -21,6 +21,7 @@ EndIf:Statement;
 // Pragmas
 abstract Pragma:Statement;
 DeprecatedMsg:Pragma ::= <Message:String>;
+RequireSemicolon:Pragma ::= Required:Expression;
 
 abstract Expression;
 BinaryExpression:Expression ::= <Operator:BinaryOp> Left:Expression Right:Expression;

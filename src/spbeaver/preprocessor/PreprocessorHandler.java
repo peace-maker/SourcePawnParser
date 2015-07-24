@@ -33,6 +33,8 @@ public class PreprocessorHandler {
     // Deprecated message for next method declaration
     private boolean deprecated = false;
     private String deprecatedMessage = "";
+    // Semicolons required
+    private boolean semicolonsRequired = false;
     
     public PreprocessorHandler(SPParser parser) {
         this.parser = parser;
@@ -93,6 +95,10 @@ public class PreprocessorHandler {
         deprecated = false;
         deprecatedMessage = "";
         return msg;
+    }
+    
+    public boolean semicolonsRequired() {
+        return semicolonsRequired;
     }
     
     public boolean shouldSkip() {
@@ -232,5 +238,12 @@ public class PreprocessorHandler {
         // This is picked up by the next Method declaration.
         this.deprecated = true;
         deprecatedMessage = deprecated.getMessage();
+    }
+    
+    public void accept(RequireSemicolon semicolon) throws Exception {
+        if (shouldSkip())
+            return;
+        
+        semicolonsRequired = semicolon.getRequired().value() > 0;
     }
 }

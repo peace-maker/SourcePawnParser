@@ -1,6 +1,5 @@
 aspect PrettyPrint {
     public class PrettyPrinter {
-        public static String INDENT = "\t";
         private StringBuilder sb;
 	  	public PrettyPrinter(){
 	  		sb = new StringBuilder();
@@ -92,7 +91,13 @@ aspect PrettyPrint {
     }
     
     public void DeprecatedMsg.print() {
-        printer().append("#pragma deprecated " + getMessage());
+        printer().append("#pragma deprecated " + getMessage() + "\n");
+    }
+    
+    public void RequireSemicolon.print() {
+        printer().append("#pragma semicolon ");
+        getRequired().print();
+        printer().append("\n");
     }
   
   

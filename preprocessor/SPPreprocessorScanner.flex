@@ -80,6 +80,7 @@ MultiComment   = "/*" ~"*/"
 
 "pragma" { return sym(Terminals.PRAGMA); }
 "deprecated" { return sym(Terminals.DEPRECATED); }
+"semicolon" { return sym(Terminals.SEMICOLONLITERALLY); }
 
 // Separators
 "(" { return sym(Terminals.LPAREN); }

@@ -32,4 +32,7 @@ aspect Visitor {
     public void DeprecatedMsg.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
         visitor.accept(this);
     }
+    public void RequireSemicolon.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
 }
