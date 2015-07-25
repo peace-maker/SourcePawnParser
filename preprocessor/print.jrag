@@ -30,74 +30,68 @@ aspect PrettyPrint {
     abstract void Statement.print();
   
     public void UserError.print() {
-        printer().append("#error " + getError() + "\n");
+        printer().append("\n#error " + getError());
     }
     
     public void UserAssert.print() {
-        printer().append("#assert ");
+        printer().append("\n#assert ");
         getExpr().print();
-        printer().append("\n");
     }
     
     public void Include.print() {
         if ((getFlags() & IncludeFlags.TRY) > 0)
-            printer().append("#tryinclude ");
+            printer().append("\n#tryinclude ");
         else
-            printer().append("#include ");
+            printer().append("\n#include ");
         
         if ((getFlags() & IncludeFlags.PATH) > 0)
-            printer().append("<" + getFile() + ">\n");
+            printer().append("<" + getFile() + ">");
         else
-            printer().append("\"" + getFile() + "\"\n");
+            printer().append(getFile());
     }
     
     public void EndInput.print() {
-        printer().append("#endinput\n");
+        printer().append("\n#endinput");
     }
 
     public void Define.print() {
-        printer().append("#define " + getName());
+        printer().append("\n#define " + getName());
         if (hasValue()) {
             printer().append(" ");
             getValue().print();
         }
-        printer().append("\n");
     }
   
     public void Undefine.print() {
-        printer().append("#undef ");
+        printer().append("\n#undef ");
         getName().print();
-        printer().append("\n");
     }
     
     public void If.print() {
-        printer().append("#if ");
+        printer().append("\n#if ");
         getExpr().print();
-        printer().append("\n");
     }
     
     public void ElseIf.print() {
-        printer().append("#elseif ");
+        printer().append("\n#elseif ");
         getExpr().print();
-        printer().append("\n");
     }
     
     public void Else.print() {
-        printer().append("#else\n");
+        printer().append("\n#else");
     }
     
     public void EndIf.print() {
-        printer().append("#endif\n");
+        printer().append("\n#endif");
     }
     
     public void DeprecatedMsg.print() {
-        printer().append("#pragma deprecated " + getMessage() + "\n");
+        printer().append("\n#pragma deprecated " + getMessage());
     }
     
     public void RequireSemicolon.print() {
-        printer().append("#pragma semicolon ");
+        printer().append("\n#pragma semicolon ");
         getRequired().print();
-        printer().append("\n");
     }
   
   
@@ -126,7 +120,7 @@ aspect PrettyPrint {
         printer().append(getInteger());
     }
     public void SPString.print() {
-        printer().append("\"" + getString() + "\"");
+        printer().append(getString());
     }
     public void Literal.print() {
         printer().append(getString());
