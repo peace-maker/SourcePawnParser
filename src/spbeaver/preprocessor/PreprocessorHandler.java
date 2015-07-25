@@ -73,6 +73,10 @@ public class PreprocessorHandler {
         if (expr instanceof Literal)
             return ((Literal)expr).getString();
         
+        // Scan the identifier. Probably a nested define?
+        if (expr instanceof IdentUse)
+            return ((IdentUse)expr).getID();
+        
         // Insert the String
         if (expr instanceof SPString)
             return ((SPString)expr).getString();
