@@ -76,10 +76,7 @@ aspect PrettyPrint {
   }
   
   public void PreprocessorLine.print() {
-    if (getLine() == null)
-        printer().append("\n" + getRawLine());
-    else
-        printer().append(getLine().print().getString());
+    printer().append("\n" + getRawLine());
   }
   
   public void Break.print() {

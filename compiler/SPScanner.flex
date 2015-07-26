@@ -33,7 +33,9 @@ import java.util.Stack;
     SPScanner cur = new SPScanner(zzReader);
     cur.zzState = zzState;
     cur.zzLexicalState = zzLexicalState;
-    cur.zzBuffer = zzBuffer;
+    char newBuffer[] = new char[zzBuffer.length];
+    System.arraycopy(zzBuffer, 0, newBuffer, 0, zzBuffer.length);
+    cur.zzBuffer = newBuffer;
     cur.zzMarkedPos = zzMarkedPos;
     cur.zzPushbackPos = zzPushbackPos;
     cur.zzCurrentPos = zzCurrentPos;
@@ -100,7 +102,14 @@ import java.util.Stack;
 	    }
 	    
 	    // Always return preprocessor or end-of-file symbols.
-	    if (sym.getId() == Terminals.PREPROCESSOR || sym.getId() == Terminals.EOF)
+	    if (sym.getId() == Terminals.PREPROCESSOR) {
+	       // Parse the preprocessor line now!
+	       preprocessor.parsePreprocessorLine(sym);
+	       // Just return the normal symbol
+	       // TODO: add preprocessor ASTNode to symbol
+	       return sym;
+	    } 
+	    if (sym.getId() == Terminals.EOF)
 	        return sym;
     // Get the next token, if we should still skip.
     } while (preprocessor.shouldSkip());

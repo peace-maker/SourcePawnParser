@@ -52,6 +52,33 @@ public class PreprocessorHandler {
         getParser().parseErrors.add(new SPParser.Exception(error, symbol));
     }
     
+    public Statement parsePreprocessorLine(Symbol symbol_pre) {
+        final String pre = (String) symbol_pre.value;
+        // Skip the leading #
+        String preprocessInput = pre.substring(pre.indexOf('#')+1);
+        try
+        {
+            // Try to parse the preprocessor line
+            SPPreprocessorScanner preprocessorScanner = new SPPreprocessorScanner(new ByteArrayInputStream(preprocessInput.getBytes()));
+            // Tell the scanner, he's scanning the current line in the real file.
+            preprocessorScanner.setCurrentLine(Symbol.getLine(symbol_pre.getStart())-1);
+            
+            Preprocessor stmt = (Preprocessor) preprocessorParser.parse(preprocessorScanner);
+            stmt.preprocessor = this;
+            // Remember it if it was sane.
+            add(stmt.getStatement());
+            return stmt.getStatement();
+            //return new PreprocessorLine(stmt, pre);
+        } catch (beaver.Parser.Exception e) {
+            getParser().parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage() + " : " + pre, symbol_pre));
+        } catch (PreprocessorHandler.Exception e) {
+            getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
+        } catch (IOException e) {
+            getParser().parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), symbol_pre));
+        }
+        return null;
+    }
+    
     public Opt<Expression> getDefine(String define) {
         return defines.get(define);
     }

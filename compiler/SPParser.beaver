@@ -91,8 +91,6 @@ package spbeaver.parser;
     /** List of preprocessor statements */
     public PreprocessorHandler preprocessor = new PreprocessorHandler(this);
     
-    /** Preprocessor parser instance */
-    public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
     
     /**
      * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token
@@ -271,34 +269,8 @@ package spbeaver.parser;
 %typeof Goal = "SourcePawnFile";
 %goal Goal;
 
-// Delegate preprocessor lines to a seperate parser
-Preprocessor = PREPROCESSOR.pre
-             {:
-                // Skip the leading #
-                String preprocessInput = pre.substring(pre.indexOf('#')+1);
-                try
-                {
-                    // Try to parse the preprocessor line
-                    SPPreprocessorScanner preprocessorScanner = new SPPreprocessorScanner(new ByteArrayInputStream(preprocessInput.getBytes()));
-                    // Tell the scanner, he's scanning the current line in the real file.
-                    preprocessorScanner.setCurrentLine(Symbol.getLine(_symbol_pre.getStart())-1);
-                    
-	                Preprocessor stmt = (Preprocessor) preprocessorParser.parse(preprocessorScanner);
-	                stmt.preprocessor = preprocessor;
-	                // Remember it if it was sane.
-	                preprocessor.add(stmt.getStatement());
-	                return new PreprocessorLine(stmt, pre);
-	            } catch (beaver.Parser.Exception e) {
-			        parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage(), _symbol_pre));
-			    } catch (PreprocessorHandler.Exception e) {
-			        parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
-			    } catch (IOException e) {
-			        parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), _symbol_pre));
-		        }
-                // Make the current parser happy.
-                return new PreprocessorLine(null, pre);
-             :}
-;
+// Preprocessor lines are parsed right when they're lexed in the scanner.
+Preprocessor = PREPROCESSOR.pre {: return new PreprocessorLine(pre); :};
 
 Goal = GlobalStatementList.s {: return new SourcePawnFile(s); :}
 ;
