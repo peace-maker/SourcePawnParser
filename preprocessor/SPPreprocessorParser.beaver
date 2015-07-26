@@ -17,9 +17,9 @@ package spbeaver.preprocessor;
 :};
 
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
-%terminals ERROR, ASSERT;
-%terminals INCLUDE, TRYINCLUDE, DEFINE, UNDEFINE, ENDINPUT;
-%terminals PRAGMA, DEPRECATED, SEMICOLONLITERALLY;
+%terminals ASSERT;
+%terminals DEFINE, UNDEFINE, ENDINPUT;
+%terminals PRAGMA, SEMICOLONLITERALLY;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
 %terminals LPAREN, RPAREN;
@@ -29,17 +29,13 @@ package spbeaver.preprocessor;
 %typeof Statements = "Statement";
 %typeof Define = "Statement";
 %typeof EndInput = "Statement";
-%typeof UserError = "Statement";
 %typeof Assert = "Statement";
-%typeof Include = "Statement";
-%typeof TryInclude = "Statement";
 
 %typeof If = "Statement";
 %typeof ElseIf = "Statement";
 %typeof Else = "Statement";
 %typeof EndIf = "Statement";
 %typeof Pragma = "Statement";
-%typeof Deprecated = "Statement";
 %typeof Semicolon = "Statement";
 
 %typeof Expression = "Expression";
@@ -79,10 +75,7 @@ Goal = Statements.stmt {: return new Preprocessor(stmt); :};
 Statements = Define
            | Undefine
            | EndInput
-           | UserError
            | Assert
-           | Include
-           | TryInclude
            | If
            | ElseIf
            | Else
@@ -92,21 +85,7 @@ Statements = Define
 
 EndInput = ENDINPUT {: return new EndInput(); :};
 
-UserError = ERROR IDENTIFIER.error {: return new UserError(error); :}
-          | ERROR LITERAL.error {: return new UserError(error); :}
-;
-
 Assert = ASSERT Expression.expr {: return new UserAssert(expr); :};
-
-Include = INCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.CURRENTPATH); :}
-        | INCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.NONE); :}
-        | INCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.NONE); :}
-;
-
-TryInclude = TRYINCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.TRY|IncludeFlags.CURRENTPATH); :}
-           | TRYINCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.TRY); :}
-           | TRYINCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.TRY); :}
-;
 
 Define = DEFINE IDENTIFIER.id
        {:
@@ -127,12 +106,8 @@ Else = ELSE {: return new Else(); :};
 EndIf = ENDIF {: return new EndIf(); :};
 
 // Pragma
-Pragma = PRAGMA Deprecated
-       | PRAGMA Semicolon;
-Deprecated = DEPRECATED {: return new DeprecatedMsg(""); :}
-           // TODO: Just get rest of line as message
-           | DEPRECATED STRINGLIT.msg {: return new DeprecatedMsg(msg); :}
-;
+Pragma = PRAGMA Semicolon;
+
 Semicolon = SEMICOLONLITERALLY Expression.i {: return new RequireSemicolon(i); :};
 
 

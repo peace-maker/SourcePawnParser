@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import beaver.Symbol;
 import spbeaver.parser.SPParser;
@@ -42,12 +44,23 @@ public class PreprocessorHandler {
     /** Preprocessor parser instance */
     public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
     
+    // Full line regular expressions
+    // Some preprocessor lines just require the rest of the line in one.
+    // JFlex tries to tokenize them..
+    private Pattern pragmaDeprectated;
+    private Pattern userError;
+    private Pattern includePath;
+    
     public PreprocessorHandler(SPParser parser) {
         this.parser = parser;
         
         // Add predefined __DATE__ and __TIME__
         defines.put("__DATE__", new Opt<Expression>(new SPString("\"\"")));
         defines.put("__TIME__", new Opt<Expression>(new SPString("\"\"")));
+        
+        pragmaDeprectated = Pattern.compile("^pragma\\s+deprecated\\s+(.*)");
+        userError = Pattern.compile("^error\\s+(.*)");
+        includePath = Pattern.compile("^(try)?include\\s+(\".*\"|<.*>)");
     }
     
     public SPParser getParser() {
@@ -64,6 +77,14 @@ public class PreprocessorHandler {
         String preprocessInput = pre.substring(pre.indexOf('#')+1);
         try
         {
+            // Some statements just require to fetch the rest of the line, no matter what's coming
+            // Grab them beforehand, because JFlex doesn't support getting all remaining tokens of a line at once.
+            Statement fullLineStmt = parseFullLineStatements(preprocessInput);
+            if (fullLineStmt != null) {
+                add(fullLineStmt);
+                return fullLineStmt;
+            }
+            
             // Try to parse the preprocessor line
             SPPreprocessorScanner preprocessorScanner = new SPPreprocessorScanner(new ByteArrayInputStream(preprocessInput.getBytes()));
             // Tell the scanner, he's scanning the current line in the real file.
@@ -81,6 +102,31 @@ public class PreprocessorHandler {
             getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
         } catch (IOException e) {
             getParser().parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), symbol_pre));
+        }
+        return null;
+    }
+    
+    private Statement parseFullLineStatements(String line) {
+        // Match #pragma deprecated MESSAGE
+        Matcher matcher = pragmaDeprectated.matcher(line);
+        if (matcher.find()) {
+            return new DeprecatedMsg(matcher.group(1));
+        }
+        // Match #error MESSAGE
+        matcher = userError.matcher(line);
+        if (matcher.find()) {
+            return new UserError(matcher.group(1));
+        }
+        // Match #(try)include <file>
+        //       #(try)include "file"
+        matcher = includePath.matcher(line);
+        if (matcher.find()) {
+            int flags = matcher.group(1) == null ? IncludeFlags.NONE : IncludeFlags.TRY;
+            String path = matcher.group(2);
+            if (path.startsWith("\""))
+                flags |= IncludeFlags.CURRENTPATH;
+            // Strip < or " and > or "
+            return new Include(path.substring(1, path.length()-1), flags);
         }
         return null;
     }

@@ -64,11 +64,8 @@ MultiComment   = "/*" ~"*/"
 // Keywords
 "define" { return sym(Terminals.DEFINE); }
 "undef" { return sym(Terminals.UNDEFINE); }
-"include" { return sym(Terminals.INCLUDE); }
-"tryinclude" { return sym(Terminals.TRYINCLUDE); }
 "endinput" { return sym(Terminals.ENDINPUT); }
 
-"error" { return sym(Terminals.ERROR); }
 "assert" { return sym(Terminals.ASSERT); }
 
 "if" { return sym(Terminals.IF); }
@@ -79,7 +76,6 @@ MultiComment   = "/*" ~"*/"
 "defined" { return sym(Terminals.DEFINED); }
 
 "pragma" { return sym(Terminals.PRAGMA); }
-"deprecated" { return sym(Terminals.DEPRECATED); }
 "semicolon" { return sym(Terminals.SEMICOLONLITERALLY); }
 
 // Separators
