@@ -98,14 +98,14 @@ UserError = ERROR IDENTIFIER.error {: return new UserError(error); :}
 
 Assert = ASSERT Expression.expr {: return new UserAssert(expr); :};
 
-Include = INCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.LOCAL); :}
-        | INCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.PATH); :}
-        | INCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.PATH); :}
+Include = INCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.CURRENTPATH); :}
+        | INCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.NONE); :}
+        | INCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.NONE); :}
 ;
 
-TryInclude = TRYINCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.TRY|IncludeFlags.LOCAL); :}
-           | TRYINCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.TRY|IncludeFlags.PATH); :}
-           | TRYINCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.TRY|IncludeFlags.PATH); :}
+TryInclude = TRYINCLUDE STRINGLIT.file {: return new Include(file, IncludeFlags.TRY|IncludeFlags.CURRENTPATH); :}
+           | TRYINCLUDE LT IDENTIFIER.file GT {: return new Include(file, IncludeFlags.TRY); :}
+           | TRYINCLUDE LT LITERAL.file GT {: return new Include(file, IncludeFlags.TRY); :}
 ;
 
 Define = DEFINE IDENTIFIER.id

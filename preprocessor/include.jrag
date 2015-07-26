@@ -1,0 +1,11 @@
+aspect IncludePaths {
+    private String Include.realPath = "";
+    
+    public String Include.getRealPath() {
+        return realPath;
+    }
+    
+    public void Include.setRealPath(String realPath) {
+        this.realPath = realPath;
+    }
+}

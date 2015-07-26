@@ -2,7 +2,10 @@ package spbeaver.parser; // The generated parser will belong to this package
 
 import spbeaver.parser.SPParser.Terminals; 
 import spbeaver.preprocessor.PreprocessorHandler;
+import spbeaver.preprocessor.Statement;
+import spbeaver.preprocessor.Include;
 import java.util.Stack;
+import java.io.FileReader;
 // The terminals are implicitly defined in the parser
 %%
 
@@ -29,8 +32,9 @@ import java.util.Stack;
   private Stack<SPScanner> stackedScanners = new Stack<>();
   
   // Save the current state
-  public void pushCurrentScannerState() {
+  public void pushCurrentScannerState(boolean include) {
     SPScanner cur = new SPScanner(zzReader);
+    cur.isIncludeScanner = include;
     cur.zzState = zzState;
     cur.zzLexicalState = zzLexicalState;
     char newBuffer[] = new char[zzBuffer.length];
@@ -50,7 +54,7 @@ import java.util.Stack;
   }
   
   // Reapply the last state from the stack.
-  public void popScannerState() {
+  public boolean popScannerState() {
     SPScanner last = stackedScanners.pop();
     zzReader = last.zzReader;
     zzState = last.zzState;
@@ -66,8 +70,10 @@ import java.util.Stack;
     yycolumn = last.yycolumn;
     zzAtBOL = last.zzAtBOL;
     zzAtEOF = last.zzAtEOF;
+    return last.isIncludeScanner;
   }
   
+  public boolean isIncludeScanner = false;
   
   // Reference to our preprocessor handler.
   public PreprocessorHandler preprocessor = null;
@@ -81,7 +87,8 @@ import java.util.Stack;
 	    
 	    // If we encountered the end of the macro replacement, continue scanning the previous text.
 	    if (sym.getId() == Terminals.EOF && !stackedScanners.isEmpty()) {
-	       popScannerState();
+	       if(popScannerState())
+	           preprocessor.getParser().includeManager.leaveFile();
 	       return nextToken();
 	    }
 	    
@@ -91,7 +98,7 @@ import java.util.Stack;
 	       String replacement = preprocessor.replaceDefine((String)sym.value);
 	       
 	       // Start lexing from this replacement string until we reach the end.
-	       pushCurrentScannerState();
+	       pushCurrentScannerState(false);
 	       int lastLine = yyline;
 	       int lastColumn = yycolumn;
 	       yyreset(new java.io.InputStreamReader(new java.io.ByteArrayInputStream(replacement.getBytes())));
@@ -104,7 +111,16 @@ import java.util.Stack;
 	    // Always return preprocessor or end-of-file symbols.
 	    if (sym.getId() == Terminals.PREPROCESSOR) {
 	       // Parse the preprocessor line now!
-	       preprocessor.parsePreprocessorLine(sym);
+	       Statement preprocessorStmt = preprocessor.parsePreprocessorLine(sym);
+	       if (preprocessorStmt instanceof Include) {
+	           Include include = (Include)preprocessorStmt;
+	           // Read included file!
+	           if (!include.getRealPath().isEmpty()) {
+	               pushCurrentScannerState(true);
+	               yyreset(new FileReader(include.getRealPath()));
+	               preprocessor.getParser().includeManager.enterFile(include.getRealPath());
+	           }
+	       }
 	       // Just return the normal symbol
 	       // TODO: add preprocessor ASTNode to symbol
 	       return sym;

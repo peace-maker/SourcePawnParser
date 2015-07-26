@@ -91,6 +91,13 @@ package spbeaver.parser;
     /** List of preprocessor statements */
     public PreprocessorHandler preprocessor = new PreprocessorHandler(this);
     
+    public String currentInputFile;
+    public IncludeManager includeManager = new IncludeManager();
+    
+    public SPParser(String inputFile) {
+        this();
+        currentInputFile = inputFile;
+    }
     
     /**
      * Implements parsing error recovery. Tries several simple approches first, like deleting "bad" token

@@ -20,8 +20,8 @@ class SPFrontEnd {
       System.out.flush();
       inputFileName = args[0];
     }
-   try {
-      SPParser parser = new SPParser();
+   try { 
+      SPParser parser = new SPParser(inputFileName);
       SPScanner scanner = new SPScanner(new FileReader(inputFileName));
       // Link preprocessor class to lexer.
       scanner.preprocessor = parser.preprocessor;

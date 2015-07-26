@@ -1,8 +1,11 @@
 package spbeaver.preprocessor;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Stack;
 
+import beaver.Symbol;
 import spbeaver.parser.SPParser;
 
 public class PreprocessorHandler {
@@ -36,12 +39,15 @@ public class PreprocessorHandler {
     // Semicolons required
     private boolean semicolonsRequired = false;
     
+    /** Preprocessor parser instance */
+    public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
+    
     public PreprocessorHandler(SPParser parser) {
         this.parser = parser;
         
         // Add predefined __DATE__ and __TIME__
-        defines.put("__DATE__", new Opt<Expression>(new SPString("")));
-        defines.put("__TIME__", new Opt<Expression>(new SPString("")));
+        defines.put("__DATE__", new Opt<Expression>(new SPString("\"\"")));
+        defines.put("__TIME__", new Opt<Expression>(new SPString("\"\"")));
     }
     
     public SPParser getParser() {
@@ -144,10 +150,28 @@ public class PreprocessorHandler {
         endInput = false;
     }
     
+    // Visitors
     public void add(Statement statement) throws Exception {
         statement.visit(this);
     }
 
+    public void accept(Include include) throws Exception {
+        if (shouldSkip())
+            return;
+        
+        // Try to find the file.
+        String path = parser.includeManager.resolvePath(include.getFile(), parser.currentInputFile, (include.getFlags() & IncludeFlags.CURRENTPATH) > 0);
+        // File not found.
+        if (path.isEmpty()) {
+            if ((include.getFlags() & IncludeFlags.TRY) == 0) {
+                throw new PreprocessorHandler.Exception("Cannot read from file: \"" + include.getFile() + "\"", include);
+            }
+        }
+        
+        // Parse it in the context of the current parser's state.
+        include.setRealPath(path);
+    }
+    
     public void accept(Define def) throws Exception {
         if (shouldSkip())
             return;

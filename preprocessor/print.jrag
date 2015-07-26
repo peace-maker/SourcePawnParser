@@ -44,7 +44,7 @@ aspect PrettyPrint {
         else
             printer().append("\n#include ");
         
-        if ((getFlags() & IncludeFlags.PATH) > 0)
+        if ((getFlags() & IncludeFlags.CURRENTPATH) == 0)
             printer().append("<" + getFile() + ">");
         else
             printer().append(getFile());
