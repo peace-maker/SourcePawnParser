@@ -251,7 +251,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 "if" { return sym(Terminals.IF); }
 "native" { return sym(Terminals.NATIVE); }
 "new" { return sym(Terminals.NEW); }
-//"operator" { return sym(Terminals.OPERATOR); }
+"operator" { return sym(Terminals.OPERATOR); }
 "public" { return sym(Terminals.PUBLIC); }
 "return" { return sym(Terminals.RETURN); }
 "sizeof" { return sym(Terminals.SIZEOF); }

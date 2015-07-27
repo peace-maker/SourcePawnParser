@@ -131,6 +131,10 @@ package spbeaver.parser;
             deprecatedMessage = preprocessor.takeDeprecatedMessage();
         }
         
+        if (ident.getID().startsWith("operator")) {
+            flags |= DeclFlags.OPERATOR;
+        }
+        
         Method method = new Method(ident, label, flags, params, body);
         method.setDeprecatedMessage(deprecatedMessage);
         return method;
@@ -150,7 +154,7 @@ package spbeaver.parser;
 //%terminals RESERVED;
 %terminals BREAK, CASE, CONST, CONTINUE, DECL, DEFAULT, DO;
 %terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG;
-%terminals IF, NATIVE, NEW, PUBLIC, RETURN, SIZEOF;
+%terminals IF, NATIVE, NEW, OPERATOR, PUBLIC, RETURN, SIZEOF;
 %terminals STOCK, STRUCT, SWITCH, STATIC, TRUE, WHILE;
 //%terminals BREAK, CASE, CELLSOF, CONST, CONTINUE, DECL, DEFAULT, DO;
 //%terminals ELSE, ENUM, FALSE, FOR, FORWARD, FUNCENUM, FUNCTAG, FUNCTION;
@@ -269,6 +273,7 @@ package spbeaver.parser;
 %typeof StructInitializer = "List<StructElement>";
 %typeof ExpressionList = "List<Expression>";
 %typeof Identifier = "Identifier";
+%typeof IdentOrOperator = "Identifier";
 %typeof Label = "Label";
 
 %typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL, PREPROCESSOR = "String";
@@ -503,40 +508,41 @@ Arguments = OldDeclArg.decl Init.init?
 
 MethodBody = Block; // TODO: Warn on single statement bodys. Prefer braced blocks.
 
-Method = ModifiersList.mod Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+Method = ModifiersList.mod Label.label IdentOrOperator.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return newMethod(name, new Opt<Label>(label), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
-	   | ModifiersList.mod Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   | ModifiersList.mod IdentOrOperator.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return newMethod(name, new Opt<Label>(), mod, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
-	   | Label.label Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   | Label.label IdentOrOperator.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return newMethod(name, new Opt<Label>(label), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
-	   | Identifier.name LPAREN Arguments.args? RPAREN MethodBody.body
+	   | IdentOrOperator.name LPAREN Arguments.args? RPAREN MethodBody.body
 	   {:
 	   		return newMethod(name, new Opt<Label>(), DeclFlags.NONE, args==null?new List<VarDecl>():args, new Opt<Statement>(body));
 	   :}
 ;
 
 
-NativeDecl = NATIVE Identifier.name LPAREN Arguments.args? RPAREN
+
+NativeDecl = NATIVE IdentOrOperator.name LPAREN Arguments.args? RPAREN
 		  {:
 		  		return newMethod(name, new Opt<Label>(), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
-		  | NATIVE Label.label Identifier.name LPAREN Arguments.args? RPAREN
+		  | NATIVE Label.label IdentOrOperator.name LPAREN Arguments.args? RPAREN
 		  {:
 		  		return newMethod(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
 ;
 
-ForwardDecl = FORWARD Identifier.name LPAREN Arguments.args? RPAREN
+ForwardDecl = FORWARD IdentOrOperator.name LPAREN Arguments.args? RPAREN
 			{:
 				return newMethod(name, new Opt<Label>(), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
 			:}
-			| FORWARD Label.label Identifier.name LPAREN Arguments.args? RPAREN
+			| FORWARD Label.label IdentOrOperator.name LPAREN Arguments.args? RPAREN
 			{:
 				return newMethod(name, new Opt<Label>(label), DeclFlags.FORWARD, args==null?new List<VarDecl>():args, new Opt<Statement>());
 			:}
@@ -947,6 +953,15 @@ CompoundLiteral = LBRACE ELLIPSES RBRACE {: return new ArrayLiteral(new List(), 
 				//| LBRACE RBRACE {: return new ArrayLiteral(new List(), false); :}
 				| LBRACE ExpressionList.l COMMA ELLIPSES.e RBRACE {: return new ArrayLiteral(l, true); :}
 				| LBRACE ExpressionList.l RBRACE {: return new ArrayLiteral(l, false); :}
+;
+
+OperatorOverride = LT | LE | GT | | GE | NE | EQ 
+                 | BANG | PLUS | MINUS | STAR | SLASH | PERCENT | INC | DEC
+;
+
+IdentOrOperator = Identifier
+                | OPERATOR OperatorOverride.op
+                {: return new Identifier("operator" + op.value); :}
 ;
 
 Identifier = IDENTIFIER.id {: return new Identifier(id); :};
