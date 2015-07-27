@@ -93,6 +93,10 @@ aspect PrettyPrint {
         printer().append("\n#pragma semicolon ");
         getRequired().print();
     }
+    
+    public void PragmaRational.print() {
+        printer().append("\n#pragma rational " + getTag());
+    }
   
   
     abstract void Expression.print();

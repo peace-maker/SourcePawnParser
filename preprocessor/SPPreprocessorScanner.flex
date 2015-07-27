@@ -77,6 +77,7 @@ MultiComment   = "/*" ~"*/"
 
 "pragma" { return sym(Terminals.PRAGMA); }
 "semicolon" { return sym(Terminals.SEMICOLONLITERALLY); }
+"rational" { return sym(Terminals.RATIONAL); }
 
 // Separators
 "(" { return sym(Terminals.LPAREN); }

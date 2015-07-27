@@ -38,4 +38,7 @@ aspect Visitor {
     public void RequireSemicolon.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
         visitor.accept(this);
     }
+    public void PragmaRational.visit(PreprocessorHandler visitor) throws PreprocessorHandler.Exception {
+        visitor.accept(this);
+    }
 }

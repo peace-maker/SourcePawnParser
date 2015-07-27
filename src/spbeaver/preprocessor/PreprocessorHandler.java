@@ -347,4 +347,8 @@ public class PreprocessorHandler {
         
         semicolonsRequired = semicolon.getRequired().value() > 0;
     }
+    
+    public void accept(PragmaRational pragma) throws Exception {
+        // don't care
+    }
 }

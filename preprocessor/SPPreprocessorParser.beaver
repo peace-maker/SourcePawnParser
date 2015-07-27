@@ -19,7 +19,7 @@ package spbeaver.preprocessor;
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;
 %terminals ASSERT;
 %terminals DEFINE, UNDEFINE, ENDINPUT;
-%terminals PRAGMA, SEMICOLONLITERALLY;
+%terminals PRAGMA, SEMICOLONLITERALLY, RATIONAL;
 %terminals LT, GT, BANG, TILDE, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals EQ, LE, GE, NE, LOGICOR, LOGICAND, SHL, SHRU, SHR;
 %terminals LPAREN, RPAREN;
@@ -106,10 +106,11 @@ Else = ELSE {: return new Else(); :};
 EndIf = ENDIF {: return new EndIf(); :};
 
 // Pragma
-Pragma = PRAGMA Semicolon;
+Pragma = PRAGMA Semicolon
+       | PRAGMA Rational;
 
 Semicolon = SEMICOLONLITERALLY Expression.i {: return new RequireSemicolon(i); :};
-
+Rational = RATIONAL Identifier.id {: return new PragmaRational(id.getID()); :};
 
 // EXPRESSIONS
 Expression = Or;
