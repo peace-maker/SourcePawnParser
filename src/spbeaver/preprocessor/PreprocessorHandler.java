@@ -51,6 +51,7 @@ public class PreprocessorHandler {
     private Pattern pragmaDeprectated;
     private Pattern userError;
     private Pattern includePath;
+    private Pattern definePattern;
     
     public PreprocessorHandler(SPParser parser, Events report) {
         this.parser = parser;
@@ -63,6 +64,7 @@ public class PreprocessorHandler {
         pragmaDeprectated = Pattern.compile("^pragma\\s+deprecated\\s+(.*)");
         userError = Pattern.compile("^error\\s+(.*)");
         includePath = Pattern.compile("^(try)?include\\s+(\".*\"|<.*>)");
+        definePattern = Pattern.compile("^define\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+(.*)");
     }
     
     public SPParser getParser() {
@@ -99,6 +101,21 @@ public class PreprocessorHandler {
             return stmt.getStatement();
             //return new PreprocessorLine(stmt, pre);
         } catch (beaver.Parser.Exception e) {
+            // If #define fails to parse, just take the value as a blackbox string. 
+            if (preprocessInput.startsWith("define")) {
+                Statement defineStmt = saveDefine(preprocessInput);
+                if (defineStmt != null) {
+                    // Ignore syntax error
+                    getParser().parseErrors.removeLast();
+                    try {
+                        add(defineStmt);
+                    } catch (PreprocessorHandler.Exception e1) {
+                        getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e1.getMessage(), e1.getSymbol()));
+                    }
+                    // Suppress error
+                    return defineStmt;
+                }
+            }
             getParser().parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage() + " : " + pre, symbol_pre));
         } catch (PreprocessorHandler.Exception e) {
             getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
@@ -129,6 +146,14 @@ public class PreprocessorHandler {
                 flags |= IncludeFlags.CURRENTPATH;
             // Strip < or " and > or "
             return new Include(path.substring(1, path.length()-1), flags);
+        }
+        return null;
+    }
+    
+    public Statement saveDefine(String define) {
+        Matcher matcher = definePattern.matcher(define);
+        if (matcher.find()) {
+            return new Define(matcher.group(1), new Opt<Expression>(new Literal(matcher.group(2))));
         }
         return null;
     }
