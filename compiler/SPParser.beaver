@@ -121,7 +121,7 @@ package spbeaver.parser;
     
     // Helper method to add a deprecated flag to method declarations,
     // if there was a #pragma deprecated line before.
-    protected Symbol newMethod(Identifier ident, Opt<Label> label, int flags, List<VarDecl> params, Opt<Statement> body) {
+    protected Method newMethod(Identifier ident, Opt<Label> label, int flags, List<VarDecl> params, Opt<Statement> body) {
         
         // There is a #pragma deprecated pending.
         // Add it to this declaration.
@@ -536,6 +536,18 @@ NativeDecl = NATIVE IdentOrOperator.name LPAREN Arguments.args? RPAREN
 		  {:
 		  		return newMethod(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
 		  :}
+		  | NATIVE IdentOrOperator.name LPAREN Arguments.args? RPAREN ASSIGN Identifier.alias
+          {:
+                Method method = newMethod(name, new Opt<Label>(), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                method.setChild(alias, method.getRouterChildPosition());
+                return method;
+          :}
+          | NATIVE Label.label IdentOrOperator.name LPAREN Arguments.args? RPAREN ASSIGN Identifier.alias
+          {:
+                Method method = newMethod(name, new Opt<Label>(label), DeclFlags.NATIVE, args==null?new List<VarDecl>():args, new Opt<Statement>());
+                method.setChild(alias, method.getRouterChildPosition());
+                return method;
+          :}
 ;
 
 ForwardDecl = FORWARD IdentOrOperator.name LPAREN Arguments.args? RPAREN

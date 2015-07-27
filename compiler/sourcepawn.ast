@@ -12,7 +12,8 @@ ExpressionStatement:Statement ::= Expr:Expression;
 Declaration ::= [Name:Identifier] [Label:Label] Dims:Expression* <Flags:int>;
 VarDecl:Statement ::= Var:Declaration [Init:Expression] [Next:VarDecl];
 
-Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement];
+// Natives can just be an alias for another method. The other method may be stored in the Router.
+Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement] /Router:Identifier/;
 
 FuncEnum:Statement ::= Name:Identifier Methods:FuncEnumElement*;
 FuncEnumElement:Statement ::= [Label:Label] Args:VarDecl*;

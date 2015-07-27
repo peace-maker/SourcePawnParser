@@ -337,6 +337,11 @@ aspect PrettyPrint {
   	
   	if (hasBody())
   		getBody().print();
+  	else if (getRouterNoTransform() != null) {
+  	    printer().append(" = ");
+  	    getRouterNoTransform().print();
+  	    printer().append(";");
+  	}
   	else
   		printer().append(";");
   }
