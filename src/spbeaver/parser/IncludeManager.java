@@ -7,7 +7,30 @@ import java.util.Stack;
 public class IncludeManager {
     private final String[] FILE_EXTENSIONS = {".inc", ".p", ".pawn"}; 
     
-    private Stack<String> includedFiles = new Stack<>();
+    class SourceFile {
+        private int fileIndex;
+        private String filePath;
+        public SourceFile(String filePath, int fileIndex) {
+            this.fileIndex = fileIndex;
+            this.filePath = filePath;
+        }
+        public int getFileIndex() {
+            return fileIndex;
+        }
+        public String getFilePath() {
+            return filePath;
+        }
+    }
+    
+    private SPParser parser;
+    
+    public IncludeManager(SPParser parser) {
+        this.parser = parser;
+    }
+
+    private Stack<SourceFile> fileStack = new Stack<>();
+    
+    private int totalFiles = 0;
     
     private LinkedList<String> searchPaths = new LinkedList<>();
     
@@ -27,18 +50,18 @@ public class IncludeManager {
      * @param tryCurrentPath Whether to look for the file in the current directory or only in the search path.
      * @return Full resolved path of existing file or empty string if not found.
      */
-    public String resolvePath(String path, String currentFile, boolean tryCurrentPath) {
+    public String resolvePath(String path, boolean tryCurrentPath) {
         String realPath = "";
         if (tryCurrentPath) {
             realPath = tryExtensionsPath(path);
             // Can't find the file in the active directory.
             if (realPath.isEmpty()) {
                 // try to open the file in the same directory as the current file.
-                int lastForwardSlash = currentFile.lastIndexOf('/');
-                int lastBackwardSlash = currentFile.lastIndexOf('\\');
+                int lastForwardSlash = currentFile().lastIndexOf('/');
+                int lastBackwardSlash = currentFile().lastIndexOf('\\');
                 int lastSlash = Math.max(lastForwardSlash, lastBackwardSlash);
                 if (lastSlash != -1) {
-                    realPath = currentFile.substring(0, lastSlash) + path;
+                    realPath = currentFile().substring(0, lastSlash+1) + path;
                     realPath = tryExtensionsPath(realPath);
                 }
             }
@@ -75,13 +98,23 @@ public class IncludeManager {
     }
     
     public void enterFile(String path) {
-        includedFiles.push(path);
-        System.out.println("Parsing include " + path);
+        fileStack.push(new SourceFile(path, totalFiles++));
+        parser.preprocessor.pushIfStack();
+//        System.out.println("Parsing include " + path);
     }
     
     public String leaveFile() {
-        String path = includedFiles.pop();
-        System.out.println("Finished parsing " + path);
-        return path;
+        SourceFile include = fileStack.pop();
+        parser.preprocessor.popIfStack();
+//        System.out.println("Finished parsing " + include.getFilePath());
+        return include.getFilePath();
+    }
+    
+    public int fileIndex() {
+        return fileStack.peek().getFileIndex();
+    }
+    
+    public String currentFile() {
+        return fileStack.peek().getFilePath();
     }
 }

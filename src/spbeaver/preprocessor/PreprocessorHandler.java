@@ -32,7 +32,11 @@ public class PreprocessorHandler {
     }
     
     private SPParser parser;
+    // Remember if we're currently skipping code due to preprocessor #if conditions
     private Stack<Integer> ifstack = new Stack<>();
+    // Start over with an empty ifstack when entering new files.
+    // But restore the old ifstack, when we finish the included file.
+    private Stack<Stack<Integer>> fileIfStack = new Stack<>();
     // Set by the #endinput directive
     private boolean endInput = false;
     // Map of #define's and their values
@@ -224,6 +228,15 @@ public class PreprocessorHandler {
         endInput = false;
     }
     
+    public void pushIfStack() {
+        fileIfStack.push(ifstack);
+        ifstack = new Stack<>();
+    }
+    
+    public void popIfStack() {
+        ifstack = fileIfStack.pop();
+    }
+    
     // Visitors
     public void add(Statement statement) throws Exception {
         statement.visit(this);
@@ -234,7 +247,7 @@ public class PreprocessorHandler {
             return;
         
         // Try to find the file.
-        String path = parser.includeManager.resolvePath(include.getFile(), parser.currentInputFile, (include.getFlags() & IncludeFlags.CURRENTPATH) > 0);
+        String path = parser.includeManager.resolvePath(include.getFile(), (include.getFlags() & IncludeFlags.CURRENTPATH) > 0);
         // File not found.
         if (path.isEmpty()) {
             if ((include.getFlags() & IncludeFlags.TRY) == 0) {

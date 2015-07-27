@@ -91,12 +91,11 @@ package spbeaver.parser;
     /** List of preprocessor statements */
     public PreprocessorHandler preprocessor = new PreprocessorHandler(this, report);
     
-    public String currentInputFile;
-    public IncludeManager includeManager = new IncludeManager();
+    public IncludeManager includeManager = new IncludeManager(this);
     
     public SPParser(String inputFile) {
         this();
-        currentInputFile = inputFile;
+        includeManager.enterFile(inputFile);
     }
     
     /**
