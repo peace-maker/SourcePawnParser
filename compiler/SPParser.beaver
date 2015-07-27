@@ -89,7 +89,7 @@ package spbeaver.parser;
     public LinkedList<SPParser.Exception> parseErrors = new LinkedList<SPParser.Exception>();
     
     /** List of preprocessor statements */
-    public PreprocessorHandler preprocessor = new PreprocessorHandler(this);
+    public PreprocessorHandler preprocessor = new PreprocessorHandler(this, report);
     
     public String currentInputFile;
     public IncludeManager includeManager = new IncludeManager();

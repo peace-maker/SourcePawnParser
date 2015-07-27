@@ -14,6 +14,12 @@ package spbeaver.preprocessor;
         // Don't recover from errors!
         throw new Parser.Exception("Cannot recover from the syntax error in preprocessor directive.");
     }
+    
+    // Put errors in our error list instead of printing them directly
+    public SPPreprocessorParser(Events report) {
+        this();
+        this.report = report;
+    }
 :};
 
 %terminals IF, ELSEIF, ELSE, ENDIF, DEFINED;

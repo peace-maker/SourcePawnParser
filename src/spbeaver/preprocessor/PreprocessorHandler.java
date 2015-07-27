@@ -7,6 +7,7 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import beaver.Parser.Events;
 import beaver.Symbol;
 import spbeaver.parser.SPParser;
 
@@ -42,7 +43,7 @@ public class PreprocessorHandler {
     private boolean semicolonsRequired = false;
     
     /** Preprocessor parser instance */
-    public SPPreprocessorParser preprocessorParser = new SPPreprocessorParser();
+    public SPPreprocessorParser preprocessorParser;
     
     // Full line regular expressions
     // Some preprocessor lines just require the rest of the line in one.
@@ -51,8 +52,9 @@ public class PreprocessorHandler {
     private Pattern userError;
     private Pattern includePath;
     
-    public PreprocessorHandler(SPParser parser) {
+    public PreprocessorHandler(SPParser parser, Events report) {
         this.parser = parser;
+        preprocessorParser = new SPPreprocessorParser(report);
         
         // Add predefined __DATE__ and __TIME__
         defines.put("__DATE__", new Opt<Expression>(new SPString("\"\"")));
