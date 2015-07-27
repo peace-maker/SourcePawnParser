@@ -24,14 +24,15 @@ public class PreprocessorHandler {
         }
     }
     
-    enum IfState {
-        IGNORE, // Encountered conditional blocks inside a skip block
-        PARSE,  // Parse everything
-        SKIP    // Skip everything but preprocessor conditionals
+    private class IfState {
+        public static final int IGNORE = (1<<0); // Encountered conditional blocks inside a skip block
+        public static final int PARSE = (1<<1);  // Parse everything
+        public static final int SKIP = (1<<2);   // Skip everything but preprocessor conditionals
+        public static final int ELSE = (1<<3);   // This block was pushed by an #else. Don't allow #elseif or #else afterwards.
     }
     
     private SPParser parser;
-    private Stack<IfState> ifstack = new Stack<>();
+    private Stack<Integer> ifstack = new Stack<>();
     // Set by the #endinput directive
     private boolean endInput = false;
     // Map of #define's and their values
@@ -212,7 +213,7 @@ public class PreprocessorHandler {
     }
     
     public boolean shouldSkip() {
-        return !ifstack.isEmpty() && (ifstack.peek() == IfState.IGNORE || ifstack.peek() == IfState.SKIP);
+        return !ifstack.isEmpty() && (ifstack.peek() & (IfState.IGNORE|IfState.SKIP)) > 0;
     }
     
     public boolean endInput() {
@@ -313,23 +314,27 @@ public class PreprocessorHandler {
         if (ifstack.isEmpty())
             throw new PreprocessorHandler.Exception("#elseif without an #if!", expr);
         
-        switch (ifstack.pop()) {
+        int ifstate = ifstack.pop();
+        if ((ifstate & IfState.ELSE) > 0) {
+            // Ignore the following code anyway
+            ifstack.push(IfState.IGNORE|IfState.ELSE);
+            throw new PreprocessorHandler.Exception("#elseif after an #else!", expr);
+        }
+        
         // We're currently skipping. Just keep track of nesting levels.
-        case IGNORE:
+        if ((ifstate & IfState.IGNORE) > 0) {
             ifstack.push(IfState.IGNORE);
-            break;
-        // 
-        case PARSE:
+        }
+        else if ((ifstate & IfState.PARSE) > 0) {
             ifstack.push(IfState.IGNORE);
-            break;
-        case SKIP:
+        }
+        else if ((ifstate & IfState.SKIP) > 0) {
             if (expr.getExpr().value() == 0) {
                 ifstack.push(IfState.SKIP);
             }
             else {
                 ifstack.push(IfState.PARSE);
             }
-            break;
         }
     }
     
@@ -337,17 +342,22 @@ public class PreprocessorHandler {
         if (ifstack.isEmpty())
             throw new PreprocessorHandler.Exception("#else without an #if!", expr);
         
-        switch (ifstack.pop()) {
+        int ifstate = ifstack.pop();
+        if ((ifstate & IfState.ELSE) > 0) {
+            // Ignore the following code anyway
+            ifstack.push(IfState.IGNORE|IfState.ELSE);
+            throw new PreprocessorHandler.Exception("#else after an #else! Only one allowed.", expr);
+        }
+        
         // We're currently skipping. Just keep track of nesting levels.
-        case IGNORE:
-            ifstack.push(IfState.IGNORE);
-            break;
-        // 
-        case PARSE:
-            ifstack.push(IfState.SKIP);
-            break;
-        case SKIP:
-            ifstack.push(IfState.PARSE);
+        if ((ifstate & IfState.IGNORE) > 0) {
+            ifstack.push(IfState.IGNORE|IfState.ELSE);
+        }
+        else if ((ifstate & IfState.PARSE) > 0) {
+            ifstack.push(IfState.SKIP|IfState.ELSE);
+        }
+        else if ((ifstate & IfState.SKIP) > 0) {
+            ifstack.push(IfState.PARSE|IfState.ELSE);
         }
     }
     
