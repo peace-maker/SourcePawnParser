@@ -224,8 +224,11 @@ public class PreprocessorHandler {
         return endInput;
     }
     
-    public void clearEndInput() {
-        endInput = false;
+    public void setEndInput(boolean endInput) {
+        this.endInput = endInput;
+        // We stop with that file now. Don't care if there is an #endif missing.
+        if (endInput)
+            ifstack.clear();
     }
     
     public void pushIfStack() {
@@ -234,6 +237,10 @@ public class PreprocessorHandler {
     }
     
     public void popIfStack() {
+        // We require an #endif at the end of the file. Can't have an #if open.
+        if (!ifstack.isEmpty()) {
+            getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\"."));
+        }
         ifstack = fileIfStack.pop();
     }
     
@@ -283,7 +290,7 @@ public class PreprocessorHandler {
     public void accept(EndInput end) throws Exception {
         if (shouldSkip())
             return;
-        endInput = true;
+        setEndInput(true);
     }
     
     public void accept(UserError error) throws Exception {

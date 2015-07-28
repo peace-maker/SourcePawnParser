@@ -125,8 +125,13 @@ import java.io.FileReader;
 	       // TODO: add preprocessor ASTNode to symbol
 	       return sym;
 	    } 
-	    if (sym.getId() == Terminals.EOF)
+	    if (sym.getId() == Terminals.EOF) {
+	        // if we're still supposed to skip the lines when we reach the end of the file, there is an #endif missing.
+            if (preprocessor.shouldSkip()) {
+               preprocessor.getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\"."));
+            }
 	        return sym;
+	    }
     // Get the next token, if we should still skip.
     } while (preprocessor.shouldSkip());
     // Return the first symbol we shouldn't skip anymore.
@@ -141,7 +146,7 @@ import java.io.FileReader;
     // We encountered an #endinput directive
     if (preprocessor.endInput()) {
       // Continue lexing other included files.
-      preprocessor.clearEndInput();
+      preprocessor.setEndInput(false);
       // Simulate end-of-file!
       return new beaver.Symbol(Terminals.EOF, "end-of-file (#endinput)");
     }
