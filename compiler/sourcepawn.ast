@@ -9,14 +9,20 @@ Break:Statement;
 Continue:Statement;
 ExpressionStatement:Statement ::= Expr:Expression;
 
-Declaration ::= [Name:Identifier] [Label:Label] Dims:Expression* <Flags:int>;
-VarDecl:Statement ::= Var:Declaration [Init:Expression] [Next:VarDecl];
+abstract Decl:Statement; 
+Declaration ::= <Name:String> [Label:Label] Dims:Expression* <Flags:int>;
+VarDecl:Decl ::= Var:Declaration [Init:Expression] [Next:VarDecl];
 
 // Natives can just be an alias for another method. The other method may be stored in the Router.
-Method:Statement ::= Name:Identifier [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement] /Router:Identifier/;
+Method:Decl ::= <Name:String> [Label:Label] <Flags:int> Args:VarDecl* [Body:Statement] /Router:IdentUse/;
 
-FuncEnum:Statement ::= Name:Identifier Methods:FuncEnumElement*;
+FuncEnum:Decl ::= <Name:String> Methods:FuncEnumElement*;
 FuncEnumElement:Statement ::= [Label:Label] Args:VarDecl*;
+
+EnumStatement:Decl ::= <Name:String> Constants:EnumConstant*;
+EnumConstant:Decl ::= Decl:Declaration [Init:Expression];
+
+StructStatement:Decl ::= <Name:String> Fields:Declaration*;
 
 While:Statement ::= Condition:Expression Body:Statement;
 DoWhile:While;
@@ -30,10 +36,6 @@ If:Statement ::= Condition:Expression TrueBranch:Statement [FalseBranch:Statemen
 
 Block:Statement ::= Statements:Statement*;
 
-EnumStatement:Statement ::= [Name:Identifier] Constants:EnumConstant*;
-EnumConstant:Statement ::= Decl:Declaration [Init:Expression];
-
-StructStatement:Statement ::= Name:Identifier Fields:Declaration*;
 
 abstract Expression;
 EmptyExpression:Expression;
@@ -45,19 +47,17 @@ BinaryExpression:Expression ::= <Operator:BinaryOp> LHS:Expression RHS:Expressio
 abstract Unary:Expression;
 UnaryExpr:Expression ::= <Operator:UnaryOp> Expr:Expression;
 IncDec:UnaryExpr ::= <Postfix:boolean>;
-SizeOf:Unary ::= Name:Identifier <Level:int>;
+SizeOf:Unary ::= Name:IdentUse <Level:int>;
 UnsafeCast:Unary ::= Label Expr:Expression;
 
 abstract Primary:Expression;
-// FIXME: MethodName doesn't have to be a Prefix. Only Identifier allowed?
-// FIXME: Parser::primary() allows for 5(); or a[1][2](); function calls?!
-Call:Primary ::= MethodName:Expression Arguments:Expression*;
+Call:Primary ::= MethodName:IdentUse Arguments:Expression*;
 Index:Primary ::= Base:Expression Index:Expression;
 
 
 abstract Prefix:Expression;
-Identifier:Prefix ::= <ID:String>;
-Label:Identifier;
+IdentUse:Prefix ::= <ID:String>;
+Label:Prefix ::= <ID:String>;
 Parenthesis:Prefix ::= Expr:Expression;
 
 // Primitives
@@ -72,4 +72,4 @@ SPCharacter:Primitive ::= <Char:String>;
 
 ArrayLiteral:Primitive ::= Expressions:Expression* <RepeatLastElement:boolean>;
 StructInitializer:Primitive ::= Elements:StructElement*;
-StructElement ::= Identifier Value:Expression;
+StructElement ::= <Ident:String> Value:Expression;

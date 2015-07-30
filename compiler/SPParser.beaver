@@ -120,7 +120,7 @@ package spbeaver.parser;
     
     // Helper method to add a deprecated flag to method declarations,
     // if there was a #pragma deprecated line before.
-    protected Method newMethod(Identifier ident, Opt<Label> label, int flags, List<VarDecl> params, Opt<Statement> body) {
+    protected Method newMethod(String name, Opt<Label> label, int flags, List<VarDecl> params, Opt<Statement> body) {
         
         // There is a #pragma deprecated pending.
         // Add it to this declaration.
@@ -130,11 +130,11 @@ package spbeaver.parser;
             deprecatedMessage = preprocessor.takeDeprecatedMessage();
         }
         
-        if (ident.getID().startsWith("operator")) {
+        if (name.startsWith("operator")) {
             flags |= DeclFlags.OPERATOR;
         }
         
-        Method method = new Method(ident, label, flags, params, body);
+        Method method = new Method(name, label, flags, params, body);
         method.setDeprecatedMessage(deprecatedMessage);
         return method;
     }
@@ -271,8 +271,8 @@ package spbeaver.parser;
 %typeof CompoundLiteral = "ArrayLiteral";
 %typeof StructInitializer = "List<StructElement>";
 %typeof ExpressionList = "List<Expression>";
-%typeof Identifier = "Identifier";
-%typeof IdentOrOperator = "Identifier";
+%typeof Identifier = "IdentUse";
+%typeof IdentOrOperator = "String";
 %typeof Label = "Label";
 
 %typeof INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL, PREPROCESSOR = "String";
@@ -385,13 +385,13 @@ GlobalInit = ASSIGN LBRACE StructInitializer.s COMMA? RBRACE {: return new Struc
 
 // Special case for struct initializers in global scope
 // public Plugin:myinfo = { name = "some", author = "me" };
-StructInitializer = Identifier.id ASSIGN Expression.e
+StructInitializer = IDENTIFIER.id ASSIGN Expression.e
                   {:
                     List<StructElement> l = new List<>();
                     l.add(new StructElement(id, e));
                     return new Symbol(l);
                   :}
-                  | StructInitializer.s COMMA Identifier.id ASSIGN Expression.e
+                  | StructInitializer.s COMMA IDENTIFIER.id ASSIGN Expression.e
                   {:
                     s.add(new StructElement(id, e));
                     return _symbol_s;
@@ -429,10 +429,10 @@ Init = ASSIGN Expression.e // Initialization
 
 Declaration = OldDeclVar;
 
-OldDeclVar = Label.label Identifier.name OldArrayDim.dims?
-		   {: return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
-		   | Identifier.name OldArrayDim.dims?
-		   {: return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
+OldDeclVar = Label.label IDENTIFIER.name OldArrayDim.dims?
+		   {: return new Declaration(name, new Opt<Label>(label), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
+		   | IDENTIFIER.name OldArrayDim.dims?
+		   {: return new Declaration(name, new Opt<Label>(), dims==null?new List<Expression>():dims, DeclFlags.NEW); :}
 ;
 
 OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
@@ -450,43 +450,43 @@ OldArrayDim = LBRACKET Expression.e? RBRACKET // size unspecified
 // Functions
 OldDeclArg = Label.label ELLIPSES // Variadic
 		   {:
-		   		return new Declaration(new Opt<Identifier>(), new Opt<Label>(label), new List(), DeclFlags.VARIADIC);
+		   		return new Declaration("", new Opt<Label>(label), new List(), DeclFlags.VARIADIC);
 		   :}
 		   | ELLIPSES // Variadic
            {:
-                return new Declaration(new Opt<Identifier>(), new Opt<Label>(), new List(), DeclFlags.VARIADIC);
+                return new Declaration("", new Opt<Label>(), new List(), DeclFlags.VARIADIC);
            :}
-		   | CONST AMPERSAND Label.label Identifier.name OldArrayDim.dims?
+		   | CONST AMPERSAND Label.label IDENTIFIER.name OldArrayDim.dims?
            {:
-                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
+                return new Declaration(name, new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
            :}
-		   | CONST AMPERSAND Identifier.name OldArrayDim.dims?
+		   | CONST AMPERSAND IDENTIFIER.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
+		   		return new Declaration(name, new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE|DeclFlags.CONST);
 		   :}
-		   | CONST Label.label Identifier.name OldArrayDim.dims?
+		   | CONST Label.label IDENTIFIER.name OldArrayDim.dims?
            {:
-                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.CONST);
+                return new Declaration(name, new Opt<Label>(label), dims==null?new List():dims, DeclFlags.CONST);
            :}
-		   | CONST Identifier.name OldArrayDim.dims?
+		   | CONST IDENTIFIER.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.CONST);
+		   		return new Declaration(name, new Opt<Label>(), dims==null?new List():dims, DeclFlags.CONST);
 		   :}
-		   | AMPERSAND Label.label Identifier.name OldArrayDim.dims?
+		   | AMPERSAND Label.label IDENTIFIER.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE);
+		   		return new Declaration(name, new Opt<Label>(label), dims==null?new List():dims, DeclFlags.REFERENCE);
 		   :}
-		   | AMPERSAND Identifier.name OldArrayDim.dims?
+		   | AMPERSAND IDENTIFIER.name OldArrayDim.dims?
            {:
-                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE);
+                return new Declaration(name, new Opt<Label>(), dims==null?new List():dims, DeclFlags.REFERENCE);
            :}
-		   | Label.label Identifier.name OldArrayDim.dims?
+		   | Label.label IDENTIFIER.name OldArrayDim.dims?
 		   {:
-		   		return new Declaration(new Opt<Identifier>(name), new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NONE);
+		   		return new Declaration(name, new Opt<Label>(label), dims==null?new List():dims, DeclFlags.NONE);
 		   :}
-		   | Identifier.name OldArrayDim.dims?
+		   | IDENTIFIER.name OldArrayDim.dims?
            {:
-                return new Declaration(new Opt<Identifier>(name), new Opt<Label>(), dims==null?new List():dims, DeclFlags.NONE);
+                return new Declaration(name, new Opt<Label>(), dims==null?new List():dims, DeclFlags.NONE);
            :}
 ;
 
@@ -559,26 +559,26 @@ ForwardDecl = FORWARD IdentOrOperator.name LPAREN Arguments.args? RPAREN
 			:}
 ;
 
-FunctagDecl = FUNCTAG PUBLIC Identifier.name LPAREN Arguments.args? RPAREN
+FunctagDecl = FUNCTAG PUBLIC IDENTIFIER.name LPAREN Arguments.args? RPAREN
             {:
                 return newMethod(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
-            | FUNCTAG PUBLIC Label.label Identifier.name LPAREN Arguments.args? RPAREN
+            | FUNCTAG PUBLIC Label.label IDENTIFIER.name LPAREN Arguments.args? RPAREN
             {:
                 return newMethod(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
             // Syntax is mixed up in some includes ...
-            | FUNCTAG Identifier.name PUBLIC LPAREN Arguments.args? RPAREN
+            | FUNCTAG IDENTIFIER.name PUBLIC LPAREN Arguments.args? RPAREN
             {:
                 return newMethod(name, new Opt<Label>(), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
-            | FUNCTAG Identifier.name Label.label PUBLIC LPAREN Arguments.args? RPAREN
+            | FUNCTAG IDENTIFIER.name Label.label PUBLIC LPAREN Arguments.args? RPAREN
             {:
                 return newMethod(name, new Opt<Label>(label), DeclFlags.FUNCTAG|DeclFlags.PUBLIC, args==null?new List<VarDecl>():args, new Opt<Statement>());
             :}
 ;
 
-FuncenumDecl = FUNCENUM Identifier.name LBRACE FuncenumMethodList.methods COMMA? RBRACE
+FuncenumDecl = FUNCENUM IDENTIFIER.name LBRACE FuncenumMethodList.methods COMMA? RBRACE
              {:
                 return new FuncEnum(name, methods);
              :}
@@ -608,7 +608,7 @@ FuncenumMethodList = PUBLIC LPAREN Arguments.args? RPAREN
                    :}
 ;
 
-StructDecl = STRUCT Identifier.name LBRACE StructElements.elements COMMA? RBRACE
+StructDecl = STRUCT IDENTIFIER.name LBRACE StructElements.elements COMMA? RBRACE
           {:
                 return new StructStatement(name, elements);
           :}
@@ -639,10 +639,10 @@ StructElements = Declaration.decl
                :}
 ;
 
-Enum = ENUM Identifier.name? LBRACE RBRACE
-     {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), new List<EnumConstant>()); :}
-     | ENUM Identifier.name? LBRACE EnumConstant.constants COMMA? RBRACE
-     {: return new EnumStatement(name==null?new Opt<Identifier>():new Opt<Identifier>(name), constants==null?new List<EnumConstant>():constants); :}
+Enum = ENUM IDENTIFIER.name? LBRACE RBRACE
+     {: return new EnumStatement(name==null?"":name, new List<EnumConstant>()); :}
+     | ENUM IDENTIFIER.name? LBRACE EnumConstant.constants COMMA? RBRACE
+     {: return new EnumStatement(name==null?"":name, constants==null?new List<EnumConstant>():constants); :}
 ;
 
 EnumConstant = Declaration.decl Init.init?
@@ -681,14 +681,14 @@ CaseList = CASE Label.label StmtNoLocals.s
 		 {:
 		 	List<SwitchCase> l = new List<>();
 		 	List<Expression> e = new List<>();
-		 	e.add(new Identifier(label.getID()));
+		 	e.add(new IdentUse(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return new Symbol(l);
 		 :} 
 		 | CASE ExpressionList.e COMMA Label.label StmtNoLocals.s
 		 {:
 		 	List<SwitchCase> l = new List<>();
-		 	e.add(new Identifier(label.getID()));
+		 	e.add(new IdentUse(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return new Symbol(l);
 		 :}
@@ -701,13 +701,13 @@ CaseList = CASE Label.label StmtNoLocals.s
 		 | CaseList.l CASE Label.label StmtNoLocals.s
 		 {:
 		 	List<Expression> e = new List<>();
-		 	e.add(new Identifier(label.getID()));
+		 	e.add(new IdentUse(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return _symbol_l;
 		 :}
 		 | CaseList.l CASE ExpressionList.e COMMA Label.label StmtNoLocals.s
 		 {:
-		 	e.add(new Identifier(label.getID()));
+		 	e.add(new IdentUse(label.getID()));
 		 	l.add(new SwitchCase(e, s));
 		 	return _symbol_l;
 		 :}
@@ -930,7 +930,7 @@ Postfix = Primary.p INC {: return new IncDec(UnaryOp.INC, p, true); :}
 	  	| Primary
 ;
 Primary = Prefix
-		| Prefix.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l==null?new List<Expression>():l); :} // function call
+		| Identifier.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l==null?new List<Expression>():l); :} // function call
 		| ArrayAccess // (multi) array element
 ;
 
@@ -970,12 +970,12 @@ OperatorOverride = LT | LE | GT | | GE | NE | EQ
                  | BANG | PLUS | MINUS | STAR | SLASH | PERCENT | INC | DEC
 ;
 
-IdentOrOperator = Identifier
+IdentOrOperator = IDENTIFIER
                 | OPERATOR OperatorOverride.op
-                {: return new Identifier("operator" + op.value); :}
+                {: return new Symbol("operator" + op.value); :}
 ;
 
-Identifier = IDENTIFIER.id {: return new Identifier(id); :};
+Identifier = IDENTIFIER.id {: return new IdentUse(id); :};
 Label = LABEL.l {: return new Label(l.substring(0, l.length()-1)); :};
 
 Term = SEMICOLON;

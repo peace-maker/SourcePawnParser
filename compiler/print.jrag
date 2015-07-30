@@ -136,8 +136,8 @@ aspect PrettyPrint {
   	if(hasLabel())
   		getLabel().print();
   	
-  	if (hasName())
-  		getName().print();
+  	if (!getName().isEmpty())
+  		printer().append(getName());
   	else if ((getFlags() & DeclFlags.VARIADIC) > 0)
   		printer().append("...");
   	
@@ -259,9 +259,8 @@ aspect PrettyPrint {
   public void EnumStatement.print() {
   	printer().append(indent());
   	printer().append("enum");
-  	if (hasName()) {
-  		printer().append(" ");
-  		getName().print();
+  	if (!getName().isEmpty()) {
+  		printer().append(" " + getName());
   	}
   	printer().append(" {");
   	
@@ -288,8 +287,7 @@ aspect PrettyPrint {
   
   public void StructStatement.print() {
     printer().append(indent());
-    printer().append("struct ");
-    getName().print();
+    printer().append("struct " + getName());
     printer().append(indent() + "{");
     boolean addComma = false;
     for(Declaration decl: getFieldsList()) {
@@ -323,9 +321,8 @@ aspect PrettyPrint {
   	
   	if(hasLabel())
   		getLabel().print();
-  	getName().print();
   	
-  	printer().append("(");
+  	printer().append(getName() + "(");
   	boolean addComma = false;
   	for(VarDecl decl: getArgss()) {
   		if (addComma)
@@ -348,8 +345,7 @@ aspect PrettyPrint {
   
   public void FuncEnum.print() {
     printer().append(indent());
-    printer().append("funcenum ");
-    getName().print();
+    printer().append("funcenum " + getName());
     printer().append(indent() + "{");
     boolean addComma = false;
     for(FuncEnumElement elem: getMethodsList()) {
@@ -448,7 +444,7 @@ aspect PrettyPrint {
   	printer().append("]");
   }
   
-  public void Identifier.print() {
+  public void IdentUse.print() {
   	printer().append(getID());
   }
   
@@ -504,8 +500,8 @@ aspect PrettyPrint {
   	// Find longest identifier
   	int maxlength = 0;
   	for(StructElement e: getElementss()) {
-  		if(e.getIdentifier().getID().length() > maxlength)
-  			maxlength = e.getIdentifier().getID().length();
+  		if(e.getIdent().length() > maxlength)
+  			maxlength = e.getIdent().length();
   	}
   	
   	boolean addComma = false;
@@ -514,9 +510,9 @@ aspect PrettyPrint {
   			printer().append(",\n");
   		printer().append(PrettyPrinter.INDENT);
   		
-  		e.getIdentifier().print();
+  		printer().append(e.getIdent());
   		// Align all the values
-  		for(int i=0;i<maxlength-e.getIdentifier().getID().length();i++)
+  		for(int i=0;i<maxlength-e.getIdent().length();i++)
   			printer().append(" ");
   		
   		printer().append(" = ");
