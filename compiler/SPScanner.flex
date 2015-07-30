@@ -93,20 +93,32 @@ import java.io.FileReader;
 	    }
 	    
 	    // See if this is a define
-	    if (sym.getId() == Terminals.IDENTIFIER && preprocessor.getDefine((String)sym.value) != null) {
-	       // Replace identifier with what it's defined to in some #define preprocessor directive.
-	       String replacement = preprocessor.replaceDefine((String)sym.value);
-	       
-	       // Start lexing from this replacement string until we reach the end.
-	       pushCurrentScannerState(false);
-	       int lastLine = yyline;
-	       int lastColumn = yycolumn;
-	       yyreset(new java.io.InputStreamReader(new java.io.ByteArrayInputStream(replacement.getBytes())));
-	       yyline = lastLine;
-	       yycolumn = lastColumn;
-	       // TODO: Keep track of original macro identifier for pretty printing!
-	       return nextToken();
-	    }
+	    if (sym.getId() == Terminals.IDENTIFIER || sym.getId() == Terminals.LABEL) {
+	        String ident = (String)sym.value;
+	        // Maybe some identifier which should get replaced by the preprocessor
+	        // is matched as LABEL, if there is a colon following immediately after.
+	        // Remove ":" at end of label.
+	        if (sym.getId() == Terminals.LABEL)
+	           ident = ident.substring(0, ident.length()-1);
+		    if (preprocessor.getDefine(ident) != null) {
+		       // Replace identifier with what it's defined to in some #define preprocessor directive.
+		       String replacement = preprocessor.replaceDefine(ident);
+		       
+		       // Add the colon back after the replacement.
+		       if (sym.getId() == Terminals.LABEL)
+		          replacement += ":";
+		       
+		       // Start lexing from this replacement string until we reach the end.
+		       pushCurrentScannerState(false);
+		       int lastLine = yyline;
+		       int lastColumn = yycolumn;
+		       yyreset(new java.io.InputStreamReader(new java.io.ByteArrayInputStream(replacement.getBytes())));
+		       yyline = lastLine;
+		       yycolumn = lastColumn;
+		       // TODO: Keep track of original macro identifier for pretty printing!
+		       return nextToken();
+		    }
+		}
 	    
 	    // Always return preprocessor or end-of-file symbols.
 	    if (sym.getId() == Terminals.PREPROCESSOR) {
