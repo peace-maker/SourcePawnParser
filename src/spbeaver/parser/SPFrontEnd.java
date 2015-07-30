@@ -27,6 +27,7 @@ class SPFrontEnd {
       scanner.preprocessor = parser.preprocessor;
       // Start parsing from the nonterminal "Start".
       SourcePawnFile ast = (SourcePawnFile) parser.parse(scanner);
+      ast.collectErrors(parser.parseErrors);
       for (SPParser.Exception ex: parser.parseErrors) {
           System.err.println(ex.getMessage());
       }

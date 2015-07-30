@@ -1,0 +1,125 @@
+aspect NameResolution {
+    
+    syn lazy Decl IdentUse.decl() = findDeclaration(getID(), this);
+    syn lazy Decl Call.decl() = getMethodName().decl();
+    
+    syn lazy Decl ASTNode.findDeclaration(String name, ASTNode sym) {
+        ASTNode parent = getParent();
+        if (parent != null)
+            return parent.findDeclaration(name, sym);
+        
+        return null;
+    }
+    
+    eq SourcePawnFile.findDeclaration(String name, ASTNode sym) {
+        // Global scope
+        // TODO: Check static scope!
+        for (Statement stmt: getStatementsList()) {
+            if (stmt.containsDeclarationOf(name, sym))
+                return stmt.getDeclarationOf(name, sym);
+        }
+        return null;
+    }
+    
+    eq Method.findDeclaration(String name, ASTNode sym) {
+        
+        // Check local declarations first.
+        if (hasBody()) {
+            if (getBody().containsDeclarationOf(name, sym))
+                return getBody().getDeclarationOf(name, sym);
+        }
+        
+        // Search for that declaration in the method arguments.
+        for (VarDecl arg: getArgsList()) {
+            if (arg.containsDeclarationOf(name, sym))
+                return arg.getDeclarationOf(name, sym);
+        }
+        
+        return getParent().findDeclaration(name, sym);
+    }
+    
+    // Check this block's scope first, then check the parent scope.
+    eq Block.findDeclaration(String name, ASTNode sym) {
+        for (Statement stmt: getStatementsList()) {
+            if (stmt.containsDeclarationOf(name, sym))
+                return stmt.getDeclarationOf(name, sym);
+        }
+        return getParent().findDeclaration(name, sym);
+    }
+    
+    eq ForLoop.findDeclaration(String name, ASTNode sym) {
+        if (hasInit() && getInit().containsDeclarationOf(name, sym))
+            return getInit().getDeclarationOf(name, sym);
+        
+        return getParent().findDeclaration(name, sym);    
+    }
+    
+    syn lazy boolean Statement.containsDeclarationOf(String name, ASTNode sym) {
+        return getDeclarationOf(name, sym) != null;
+    }
+    
+    syn lazy Decl Statement.getDeclarationOf(String name, ASTNode sym) {
+        return null;
+    }
+    
+    eq VarDecl.getDeclarationOf(String name, ASTNode sym) {
+        // Variable has to be declared before use.
+        if (getStart() < sym.getStart() && getVar().getName().equals(name))
+            return this;
+        
+        // Multiple declarations on the same line
+        // new var1, var2;
+        if (hasNext())
+            return getNext().getDeclarationOf(name, sym);
+        
+        return null;
+    }
+    
+    eq Method.getDeclarationOf(String name, ASTNode sym) {
+        if (getName().equals(name))
+            return this;
+        return null;
+    }
+    
+    eq FuncEnum.getDeclarationOf(String name, ASTNode sym) {
+        if (getName().equals(name))
+            return this;
+        return null;
+    }
+    
+    eq EnumStatement.getDeclarationOf(String name, ASTNode sym) {
+        if (getName().equals(name))
+            return this;
+        
+        for (EnumConstant enumConst: getConstantsList()) {
+            if (enumConst.containsDeclarationOf(name, sym))
+                return enumConst.getDeclarationOf(name, sym);
+        }
+        
+        return null;
+    }
+    
+    eq EnumConstant.getDeclarationOf(String name, ASTNode sym) {
+        if (getDecl().getName().equals(name))
+            return this;
+        return null;
+    }
+    
+    eq StructStatement.getDeclarationOf(String name, ASTNode sym) {
+        if (getName().equals(name))
+            return this;
+        
+        for (StructFieldDeclaration elem: getFieldsList()) {
+            if (elem.containsDeclarationOf(name, sym))
+                return elem.getDeclarationOf(name, sym);
+        }
+        
+        return null;
+    }
+    
+    eq StructFieldDeclaration.getDeclarationOf(String name, ASTNode sym) {
+        if (getDecl().getName().equals(name))
+            return this;
+        return null;
+    }
+}

@@ -22,7 +22,8 @@ FuncEnumElement:Statement ::= [Label:Label] Args:VarDecl*;
 EnumStatement:Decl ::= <Name:String> Constants:EnumConstant*;
 EnumConstant:Decl ::= Decl:Declaration [Init:Expression];
 
-StructStatement:Decl ::= <Name:String> Fields:Declaration*;
+StructStatement:Decl ::= <Name:String> Fields:StructFieldDeclaration*;
+StructFieldDeclaration:Decl ::= Decl:Declaration;
 
 While:Statement ::= Condition:Expression Body:Statement;
 DoWhile:While;

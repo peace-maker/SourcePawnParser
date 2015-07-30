@@ -212,7 +212,8 @@ package spbeaver.parser;
 %typeof FuncenumDecl = "Statement";
 %typeof FuncenumMethodList = "List<FuncEnumElement>";
 %typeof StructDecl = "Statement";
-%typeof StructElements = "List<Declaration>";
+%typeof StructFieldDeclaration = "StructFieldDeclaration";
+%typeof StructElements = "List<StructFieldDeclaration>";
 %typeof Global = "Statement";
 
 %typeof Block = "Statement";
@@ -613,28 +614,32 @@ StructDecl = STRUCT IDENTIFIER.name LBRACE StructElements.elements COMMA? RBRACE
                 return new StructStatement(name, elements);
           :}
 ;
-StructElements = Declaration.decl
+StructFieldDeclaration = Declaration.decl {: return new StructFieldDeclaration(decl); :};
+
+StructElements = StructFieldDeclaration.elem
                {:
-                    List<Declaration> l = new List<Declaration>();
-                    l.add(decl);
+                    List<StructFieldDeclaration> l = new List<StructFieldDeclaration>();
+                    l.add(elem);
                     return new Symbol(l);
                :}
-               | ModifiersList.m Declaration.decl
+               | ModifiersList.m StructFieldDeclaration.elem
                {:
-                    List<Declaration> l = new List<Declaration>();
+                    List<StructFieldDeclaration> l = new List<StructFieldDeclaration>();
+                    Declaration decl = elem.getDecl();
                     decl.setFlags( decl.getFlags() | m );
-                    l.add(decl);
+                    l.add(elem);
                     return new Symbol(l);
                :}
-               | StructElements.l COMMA Declaration.decl
+               | StructElements.l COMMA StructFieldDeclaration.elem
                {:
-                    l.add(decl);
+                    l.add(elem);
                     return _symbol_l;
                :}
-               | StructElements.l COMMA ModifiersList.m Declaration.decl
+               | StructElements.l COMMA ModifiersList.m StructFieldDeclaration.elem
                {:
+                    Declaration decl = elem.getDecl();
                     decl.setFlags( decl.getFlags() | m );
-                    l.add(decl);
+                    l.add(elem);
                     return _symbol_l;
                :}
 ;

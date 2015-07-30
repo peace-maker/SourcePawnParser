@@ -290,18 +290,21 @@ aspect PrettyPrint {
     printer().append("struct " + getName());
     printer().append(indent() + "{");
     boolean addComma = false;
-    for(Declaration decl: getFieldsList()) {
+    for(StructFieldDeclaration elem: getFieldsList()) {
         if (addComma)
             printer().append(",");
         
-        printer().append(indent() + PrettyPrinter.INDENT);
-        
-        if ((decl.getFlags() & DeclFlags.CONST) > 0)
-            printer().append("const ");
-        decl.print();
+        elem.print();
         addComma = true;
     }
     printer().append(indent() + "};");
+  }
+  
+  public void StructFieldDeclaration.print() {
+    printer().append(indent());
+    if ((getDecl().getFlags() & DeclFlags.CONST) > 0)
+      printer().append("const ");
+    getDecl().print();
   }
   
   public void Method.print() {
