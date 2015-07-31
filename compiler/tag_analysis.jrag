@@ -1,0 +1,156 @@
+aspect TagAnalysis {
+    syn lazy TagInfo ASTNode.untaggedTag() = new TagInfo("_");
+    syn lazy TagInfo ASTNode.booleanTag() = new TagInfo("bool");
+    syn lazy TagInfo ASTNode.floatTag() = new TagInfo("Float");
+    syn lazy TagInfo ASTNode.functionTag() = new TagInfo("Function");
+    syn lazy TagInfo ASTNode.stringTag() = new TagInfo("String");
+    syn lazy TagInfo ASTNode.anyTag() = new TagInfo("any");
+
+    public class TagInfo {
+        protected String tag;
+        public TagInfo(String tag) {
+            this.tag = tag;
+        }
+        
+        public String getTag() {
+            return tag;
+        }
+        
+        public boolean isTagOf(TagInfo t) {
+            return t.tag.equals(tag);
+        }
+        
+        @Override
+        public String toString() {
+            return tag;
+        }
+    }
+    
+    public class ArrayTag extends TagInfo {
+        //private ArrayTag dimensions;
+        public ArrayTag(String tag) {
+            super(tag);
+        }
+        public ArrayTag(TagInfo tagInfo) {
+            super(tagInfo.getTag());
+        }
+    }
+    
+    syn lazy TagInfo ASTNode.tag() = untaggedTag();
+    
+    syn lazy TagInfo Declaration.tag() {
+        // TODO: Check getNumDims() and create appropriate array tag.
+        // ENUM STRUCTS :(
+        if (hasLabel())
+            return getLabel().tag();
+        return untaggedTag();
+    }
+    
+    syn lazy TagInfo Return.tag() {
+        if (hasExpr())
+            return getExpr().tag();
+        return untaggedTag();
+    }
+    
+    syn lazy TagInfo Decl.tag();
+    
+    eq VarDecl.tag() = getVar().tag();
+    
+    eq Method.tag() {
+        if (hasLabel())
+            return getLabel().tag();
+        return untaggedTag();
+    }
+    
+    eq FuncEnum.tag() = new TagInfo(getName());
+    eq EnumStatement.tag() {
+        if (!getName().isEmpty())
+            return new TagInfo(getName());
+        return untaggedTag();
+    }
+    eq EnumConstant.tag() = getDecl().tag();
+    
+    eq StructStatement.tag() = new TagInfo(getName());
+    eq StructFieldDeclaration.tag() = getDecl().tag();
+    
+    syn lazy TagInfo Expression.tag();
+    
+    // Primitive tags
+    eq EmptyExpression.tag() = untaggedTag();
+    eq True.tag() = booleanTag();
+    eq False.tag() = booleanTag();
+    eq SPFloat.tag() = floatTag();
+    eq SPInteger.tag() = untaggedTag();
+    eq SPCharacter.tag() = untaggedTag();
+    eq SPString.tag() = stringTag();
+    
+    eq IdentUse.tag() {
+        if (decl() == null)
+            return untaggedTag();
+        
+        return decl().tag();
+    }
+    eq Label.tag() = new TagInfo(getID());
+    eq Parenthesis.tag() = getExpr().tag();
+    
+    eq Call.tag() {
+        if (decl() == null)
+            return untaggedTag();
+        return decl().tag();
+    }
+    // TODO Handle enum structs!
+    eq Index.tag() = getBase().tag();
+    
+    eq UnsafeCast.tag() = getLabel().tag();
+    eq SizeOf.tag() = untaggedTag();
+    eq UnaryExpr.tag() = getExpr().tag();
+    
+    eq BinaryExpression.tag() {
+        switch (getOperator()) {
+            // Comparisons are boolean.
+            case LT:
+            case LE:
+            case GT:
+            case GE:
+            case EQ:
+            case NE:
+            case OR:
+            case AND:
+                return booleanTag();
+            default:
+                return getLHS().tag();
+        }
+    }
+    eq TernaryExpression.tag() {
+        if (getLeft().tag().isTagOf(untaggedTag())
+        && !getRight().tag().isTagOf(untaggedTag())) {
+            return getRight().tag();
+        }
+        else {
+            return getLeft().tag();
+        }
+    }
+    eq Assignment.tag() = getLHS().tag();
+    
+    eq ArrayLiteral.tag() {
+        // See if all elements have the same tag.
+        TagInfo elementTag = null;
+        for (Expression expr: getExpressionsList()) {
+            if (elementTag == null)
+                elementTag = expr.tag();
+            // Not all elements have the same tag..
+            else if (!elementTag.isTagOf(expr.tag()))
+                return new ArrayTag(untaggedTag());
+        }
+        if (elementTag == null)
+            return new ArrayTag(untaggedTag());
+        return new ArrayTag(elementTag);
+    }
+    
+    eq StructInitializer.tag() = getParent().tag();
+    
+    // FIXME: Return correct tag from struct declaration
+    syn lazy TagInfo StructElement.tag() {
+        return untaggedTag();
+    }
+}

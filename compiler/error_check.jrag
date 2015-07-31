@@ -17,4 +17,34 @@ aspect ErrorCheck {
             error(c, "Unknown symbol \"" + getID() + "\"");
         }
     }
+    
+    public void Declaration.collectErrors(Collection<SPParser.Exception> c) {
+        super.collectErrors(c);
+        if ((getFlags() & (DeclFlags.PUBLIC|DeclFlags.STOCK)) > 0 && !isInGlobalScope()) {
+            error(c, "local variables can't be public or stock.");
+        }
+    }
+    
+    public void VarDecl.collectErrors(Collection<SPParser.Exception> c) {
+        super.collectErrors(c);
+        if (hasInit()) {
+            if (!getInit().tag().isTagOf(tag())) {
+                error(c, "tag mismatch");
+            }
+        }
+    }
+    
+    public void Return.collectErrors(Collection<SPParser.Exception> c) {
+        super.collectErrors(c);
+        if (!tag().isTagOf(getMethod().tag())) {
+            error(c, "tag mismatch");
+        }
+    }
+    
+    public void BinaryExpression.collectErrors(Collection<SPParser.Exception> c) {
+        super.collectErrors(c);
+        if (!getLHS().tag().isTagOf(getRHS().tag())) {
+            error(c, "tag mismatch");
+        }
+    }
 }

@@ -21,6 +21,16 @@ aspect NameResolution {
         return null;
     }
     
+    syn lazy Decl Return.getMethod() {
+        ASTNode parent = getParent();
+        do {
+	        if (parent instanceof Method)
+	            return (Method)parent;
+	        parent = parent.getParent();
+        } while (parent != null);
+        return null;
+    }
+    
     eq Method.findDeclaration(String name, ASTNode sym) {
         
         // Check local declarations first.
@@ -121,5 +131,17 @@ aspect NameResolution {
         if (getDecl().getName().equals(name))
             return this;
         return null;
+    }
+    
+    syn lazy boolean ASTNode.isInGlobalScope() {
+        ASTNode parent = this;
+        do {
+            if (parent instanceof Method)
+                return false;
+            else if (parent instanceof Block)
+                return false;
+            parent = parent.getParent();
+        } while (parent != null);
+        return true;
     }
 }
