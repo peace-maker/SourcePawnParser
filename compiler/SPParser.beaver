@@ -141,7 +141,7 @@ package spbeaver.parser;
 :};
 
 %terminals INTEGERLIT, FLOATLIT, CHARLIT, STRINGLIT, IDENTIFIER, LABEL;
-%terminals LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, SEMICOLON, COMMA;//, DOT;
+%terminals LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, SEMICOLON, COMMA, DOT;
 %terminals ASSIGN, LT, GT, BANG, TILDE, QMARK, COLON, PLUS, MINUS, STAR, SLASH, AMPERSAND, BITOR, BITXOR, PERCENT;
 %terminals ASSIGN_ADD, ASSIGN_SUB, ASSIGN_MUL, ASSIGN_DIV, ASSIGN_MOD, ASSIGN_BITAND;
 %terminals ASSIGN_BITOR, ASSIGN_BITXOR, ASSIGN_SHR, ASSIGN_SHRU, ASSIGN_SHL;
@@ -265,6 +265,8 @@ package spbeaver.parser;
 %typeof EmptyDims = "Integer";
 %typeof ArrayAccess = "Expression";
 %typeof Primary = "Expression";
+%typeof CallArg = "CallArg";
+%typeof CallArgs = "List<CallArg>";
 %typeof Postfix = "Expression";
 %typeof Prefix = "Expression";
 %typeof Primitive = "Expression";
@@ -934,8 +936,30 @@ Postfix = Primary.p INC {: return new IncDec(UnaryOp.INC, p, true); :}
 	  	| Primary.p DEC {: return new IncDec(UnaryOp.DEC, p, true); :}
 	  	| Primary
 ;
+
+CallArg = Expression.val
+        {:
+            return new CallArg(val, "");
+        :}
+        | DOT IDENTIFIER.id ASSIGN Expression.val
+        {:
+            return new CallArg(val, id);
+        :}
+;
+CallArgs = CallArg.arg
+         {: 
+            List<CallArg> l = new List<>();
+            l.add(arg);
+            return new Symbol(l);
+         :}
+         | CallArgs.l COMMA CallArg.arg
+         {:
+            l.add(arg);
+            return _symbol_l;
+         :}
+;
 Primary = Prefix
-		| Identifier.name LPAREN ExpressionList.l? RPAREN {: return new Call(name, l==null?new List<Expression>():l); :} // function call
+		| Identifier.name LPAREN CallArgs.l? RPAREN {: return new Call(name, l==null?new List<CallArg>():l); :} // function call
 		| ArrayAccess // (multi) array element
 ;
 

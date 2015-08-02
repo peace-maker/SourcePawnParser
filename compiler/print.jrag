@@ -431,13 +431,20 @@ aspect PrettyPrint {
   	getMethodName().print();
   	printer().append("(");
   	boolean addComma = false;
-  	for(Expression e: getArgumentss()) {
+  	for(CallArg arg: getArgumentss()) {
   		if(addComma)
   			printer().append(", ");
-  		e.print();
+  		arg.print();
   		addComma = true;
   	}
   	printer().append(")");
+  }
+  
+  public void CallArg.print() {
+    if (!getBoundParam().isEmpty()) {
+        printer().append("." + getBoundParam() + " = ");
+    }
+    getValue().print();
   }
   
   public void Index.print() {

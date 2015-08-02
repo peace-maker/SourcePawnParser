@@ -301,7 +301,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 "]" { return sym(Terminals.RBRACKET); }
 ";" { return sym(Terminals.SEMICOLON); }
 "," { return sym(Terminals.COMMA); }
-//"." { return sym(Terminals.DOT); }
+"." { return sym(Terminals.DOT); }
 
 // Operators
 "=" { return sym(Terminals.ASSIGN); }

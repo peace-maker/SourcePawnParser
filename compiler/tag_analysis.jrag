@@ -93,6 +93,8 @@ aspect TagAnalysis {
     eq Label.tag() = new TagInfo(getID());
     eq Parenthesis.tag() = getExpr().tag();
     
+    eq CallArg.tag() = getValue().tag();
+    
     eq Call.tag() {
         if (decl() == null)
             return untaggedTag();

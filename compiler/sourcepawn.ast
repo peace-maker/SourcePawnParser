@@ -52,7 +52,8 @@ SizeOf:Unary ::= Name:IdentUse <Level:int>;
 UnsafeCast:Unary ::= Label Expr:Expression;
 
 abstract Primary:Expression;
-Call:Primary ::= MethodName:IdentUse Arguments:Expression*;
+CallArg:Expression ::= Value:Expression <BoundParam:String>;
+Call:Primary ::= MethodName:IdentUse Arguments:CallArg*;
 Index:Primary ::= Base:Expression Index:Expression;
 
 
