@@ -73,5 +73,5 @@ SPString:Primitive ::= <String:String>;
 SPCharacter:Primitive ::= <Char:String>;
 
 ArrayLiteral:Primitive ::= Expressions:Expression* <RepeatLastElement:boolean>;
-StructInitializer:Primitive ::= Elements:StructElement*;
-StructElement ::= <Ident:String> Value:Expression;
+StructInitializer:Primitive ::= Elements:Statement*;
+StructElement:Statement ::= <Ident:String> Value:Expression;

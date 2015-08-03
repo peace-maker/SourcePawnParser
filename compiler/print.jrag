@@ -509,26 +509,42 @@ aspect PrettyPrint {
   	
   	// Find longest identifier
   	int maxlength = 0;
-  	for(StructElement e: getElementss()) {
-  		if(e.getIdent().length() > maxlength)
-  			maxlength = e.getIdent().length();
+  	for(Statement e: getElementss()) {
+  	    if (!(e instanceof StructElement))
+  	         continue;
+  	    StructElement structElem = (StructElement)e;
+  		if(structElem.getIdent().length() > maxlength)
+  			maxlength = structElem.getIdent().length();
   	}
   	
   	boolean addComma = false;
-  	for(StructElement e: getElementss()) {
+  	for(Statement e: getElementss()) {
   		if(addComma)
   			printer().append(",\n");
-  		printer().append(PrettyPrinter.INDENT);
   		
-  		printer().append(e.getIdent());
-  		// Align all the values
-  		for(int i=0;i<maxlength-e.getIdent().length();i++)
-  			printer().append(" ");
-  		
-  		printer().append(" = ");
-  		e.getValue().print();
-  		addComma = true;
+  		if(e instanceof StructElement) {
+  		    ((StructElement)e).print(maxlength);
+  		    addComma = true;
+  		}
+  		else {
+  		    e.print();
+  		    addComma = false;
+  		}
   	}
   	printer().append("\n}");
+  }
+  
+  public void StructElement.print() {}
+  
+  public void StructElement.print(int maxlength) {
+    printer().append(PrettyPrinter.INDENT);
+    
+    printer().append(getIdent());
+    // Align all the values
+    for(int i=0;i<maxlength-getIdent().length();i++)
+        printer().append(" ");
+    
+    printer().append(" = ");
+    getValue().print();
   }
 }

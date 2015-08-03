@@ -283,7 +283,7 @@ package spbeaver.parser;
 %typeof Primitive = "Expression";
 %typeof Boolean = "SPBoolean";
 %typeof CompoundLiteral = "ArrayLiteral";
-%typeof StructInitializer = "List<StructElement>";
+%typeof StructInitializer = "List<Statement>";
 %typeof ExpressionList = "List<Expression>";
 %typeof Identifier = "IdentUse";
 %typeof IdentOrOperator = "String";
@@ -410,13 +410,35 @@ GlobalInit = ASSIGN LBRACE StructInitializer.s COMMA? RBRACE {: return new Struc
 // public Plugin:myinfo = { name = "some", author = "me" };
 StructInitializer = IDENTIFIER.id ASSIGN Expression.e
                   {:
-                    List<StructElement> l = new List<>();
+                    List<Statement> l = new List<>();
                     l.add(new StructElement(id, e));
                     return new Symbol(l);
                   :}
                   | StructInitializer.s COMMA IDENTIFIER.id ASSIGN Expression.e
                   {:
                     s.add(new StructElement(id, e));
+                    return _symbol_s;
+                  :}
+                  | StructInitializer.s IDENTIFIER.id ASSIGN Expression.e
+                  {:
+                    s.add(new StructElement(id, e));
+                    return _symbol_s;
+                  :}
+                  // Allow preprocessor directives
+                  | Preprocessor.pre
+                  {:
+                    List<Statement> l = new List<>();
+                    l.add(pre);
+                    return new Symbol(l);
+                  :}
+                  | StructInitializer.s Preprocessor.pre
+                  {:
+                    s.add(pre);
+                    return _symbol_s;
+                  :}
+                  | StructInitializer.s COMMA Preprocessor.pre
+                  {:
+                    s.add(pre);
                     return _symbol_s;
                   :}
 ;
