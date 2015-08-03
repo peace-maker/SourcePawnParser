@@ -8,7 +8,7 @@ aspect ErrorCheck {
     }
 
     protected void ASTNode.error(Collection<SPParser.Exception> c, String s) {
-        c.add(new SPParser.Exception(s, this));
+        c.add(new SPParser.Exception(s, this, "inline/todo"));
     }
     
     public void IdentUse.collectErrors(Collection<SPParser.Exception> c) {

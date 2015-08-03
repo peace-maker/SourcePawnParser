@@ -140,7 +140,7 @@ import java.io.FileReader;
 	    if (sym.getId() == Terminals.EOF) {
 	        // if we're still supposed to skip the lines when we reach the end of the file, there is an #endif missing.
             if (preprocessor.shouldSkip()) {
-               preprocessor.getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\"."));
+               preprocessor.getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\".", preprocessor.getParser().includeManager.currentFile()));
             }
 	        return sym;
 	    }

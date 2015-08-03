@@ -77,7 +77,7 @@ public class PreprocessorHandler {
     }
     
     public void addParseError(String error, beaver.Symbol symbol) {
-        getParser().parseErrors.add(new SPParser.Exception(error, symbol));
+        getParser().parseErrors.add(new SPParser.Exception(error, symbol, parser.includeManager.currentFile()));
     }
     
     public Statement parsePreprocessorLine(Symbol symbol_pre) {
@@ -115,17 +115,17 @@ public class PreprocessorHandler {
                     try {
                         add(defineStmt);
                     } catch (PreprocessorHandler.Exception e1) {
-                        getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e1.getMessage(), e1.getSymbol()));
+                        getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e1.getMessage(), e1.getSymbol(), parser.includeManager.currentFile()));
                     }
                     // Suppress error
                     return defineStmt;
                 }
             }
-            getParser().parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage() + " : " + pre, symbol_pre));
+            getParser().parseErrors.add(new SPParser.Exception("Error when parsing preprocessor line: " + e.getMessage() + " : " + pre, symbol_pre, parser.includeManager.currentFile()));
         } catch (PreprocessorHandler.Exception e) {
-            getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol()));
+            getParser().parseErrors.add(new SPParser.Exception("Error when processing preprocessor line: " + e.getMessage(), e.getSymbol(), parser.includeManager.currentFile()));
         } catch (IOException e) {
-            getParser().parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), symbol_pre));
+            getParser().parseErrors.add(new SPParser.Exception("Error reading preprocessor line: " + e.getMessage(), symbol_pre, parser.includeManager.currentFile()));
         }
         return null;
     }
@@ -239,7 +239,7 @@ public class PreprocessorHandler {
     public void popIfStack() {
         // We require an #endif at the end of the file. Can't have an #if open.
         if (!ifstack.isEmpty()) {
-            getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\"."));
+            getParser().parseErrors.add(new SPParser.Exception("expected token: \"#endif\", but found \"-end of file-\".", parser.includeManager.currentFile()));
         }
         ifstack = fileIfStack.pop();
     }

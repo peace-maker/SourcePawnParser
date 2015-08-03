@@ -23,31 +23,38 @@ package spbeaver.parser;
         public final Symbol symbol;
         public final int line;
         public final int column;
-        public Exception(String msg)
+        public final String file;
+        public Exception(String msg, String file)
         {
             super(msg);
+            this.file = file;
             symbol = null;
             line = 0;
             column = 0;
         }
-        public Exception(String msg, Symbol symbol)
+        public Exception(String msg, Symbol symbol, String file)
         {
             super(msg);
             this.symbol = symbol;
+            this.file = file;
             line = 0;
             column = 0;
         }
-        public Exception(String msg, int line, int column)
+        public Exception(String msg, int line, int column, String file)
         {
             super(msg);
             this.symbol = null;
             this.line = line;
             this.column = column;
+            this.file = file;
         }
         
+        @Override
         public String getMessage() {
             java.lang.StringBuilder sb = new java.lang.StringBuilder();
+            sb.append(file);
             if (symbol != null) {
+                sb.append('(');
 	            sb.append(Symbol.getLine(symbol.getStart()));
 	            sb.append(',');
 	            sb.append(Symbol.getColumn(symbol.getStart()));
@@ -55,7 +62,6 @@ package spbeaver.parser;
 	            sb.append(Symbol.getLine(symbol.getEnd()));
 	            sb.append(',');
 	            sb.append(Symbol.getColumn(symbol.getEnd()));
-	            sb.append(" ");
 	            /*sb.append(" (token ");
 	            if (symbol.value != null)
 	            {
@@ -69,32 +75,37 @@ package spbeaver.parser;
 	                sb.append(symbol.getId());
 	            }
 	            sb.append("): ");*/
+	            sb.append("): ");
 	        }
 	        else if (line > 0)
             {
+                sb.append('(');
                 sb.append(line);
                 sb.append(',');
                 sb.append(column);
-                sb.append(':');
+                sb.append("): ");
+            }
+            else
+            {
+                sb.append(": ");
             }
             sb.append(super.getMessage());
             return sb.toString();
         }
     }
-
-    /** Parsing events notification "gateway" */
-    protected Events report = new SPEvents(this);
     
     /** List of errors encountered during parsing */
     public LinkedList<SPParser.Exception> parseErrors = new LinkedList<SPParser.Exception>();
     
     /** List of preprocessor statements */
-    public PreprocessorHandler preprocessor = new PreprocessorHandler(this, report);
+    public PreprocessorHandler preprocessor;
     
     public IncludeManager includeManager = new IncludeManager(this);
     
     public SPParser(String inputFile) {
         this();
+        report = new SPEvents(this);
+        preprocessor = new PreprocessorHandler(this, report);
         includeManager.enterFile(inputFile);
     }
     
