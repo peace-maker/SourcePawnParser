@@ -200,6 +200,7 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 {Preprocessor} { return sym(Terminals.PREPROCESSOR); }
 
 // Keywords
+/*
 "aquire" | // R
 "as" | // R
 "assert" | // R
@@ -246,7 +247,8 @@ Preprocessor   = # {InputCharacter}* {LineTerminator}?
 "var" | // R
 "variant" | // R
 "virtual" | // R
-"with" { /*return sym(Terminals.RESERVED);*/ } // R
+"with" { return sym(Terminals.RESERVED); } // R
+*/
 
 "break" { return sym(Terminals.BREAK); }
 "case" { return sym(Terminals.CASE); }
