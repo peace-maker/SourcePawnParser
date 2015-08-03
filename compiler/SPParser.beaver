@@ -292,12 +292,16 @@ Goal = GlobalStatementList.s {: return new SourcePawnFile(s); :}
 GlobalStatementList = Global.g
 					{:
 						List<Statement> l = new List<>();
-						l.add(g);
+						// Ignore error nonterminal..
+						if (g != null)
+						  l.add(g);
 						return new Symbol(l);
 					:}
 					| GlobalStatementList.l Global.g
 					{:
-						l.add(g);
+						// Ignore error nonterminal..
+						if (g != null)
+						  l.add(g);
 						return _symbol_l;
 					:}
 ;
@@ -319,17 +323,22 @@ StmtNoLocals = Block
 			 | Enum.enum Term
 			 | ExprStmt.exprstmt Term
 			 | Preprocessor
+			 | error
 ;
 
 StatementList = Statement.s
 			  {:
 			  	List<Statement> l = new List<>();
-			  	l.add(s);
+			  	// Ignore error nonterminal..
+			  	if (s != null)
+			  	  l.add(s);
 			  	return new Symbol(l);
 			  :}
 			  | StatementList.l Statement.s
 			  {:
-			  	l.add(s);
+			    // Ignore error nonterminal..
+			    if (s != null)
+			  	  l.add(s);
 			  	return _symbol_l;
 			  :}
 ;
@@ -674,6 +683,7 @@ Global = GlobalVariable.v Term?
 	   | StructDecl.struct Term
 	   | Enum.enum Term
 	   | Preprocessor
+	   | error
 ;
 
 // Statements
